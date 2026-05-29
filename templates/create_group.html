@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="column column-50 column-offset-25">
+        <h2 style="text-align: center;">Create a Group</h2>
+        <p style="text-align: center;">Course: <strong>{{ user.course }}</strong></p>
+
+        <form method="POST">
+            <fieldset>
+                <label for="name">Group Name</label>
+                <input type="text" id="name" name="name" placeholder="e.g., Calc 101 Weekend Warriors" required>
+
+                <label for="contact_info">Contact Info (Discord/Email)</label>
+                <input type="text" id="contact_info" name="contact_info" required>
+
+                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+                    <input type="checkbox" name="is_public" id="is_public" checked style="width:auto;margin:0;">
+                    Public group (anyone can join instantly; uncheck for private/request-only)
+                </label>
+
+                <br>
+                <input class="button-primary" type="submit" value="Create Group">
+                <a class="button button-clear" href="/dashboard">Cancel</a>
+            </fieldset>
+        </form>
+    </div>
+</div>
+{% endblock %}

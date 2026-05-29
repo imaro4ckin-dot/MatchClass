@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="column column-50 column-offset-25">
+        <h1 style="text-align: center;">StudyMatch</h1>
+        <p style="text-align: center;">Find your perfect study group.</p>
+
+        <form method="POST">
+            <fieldset>
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+
+                <input class="button-primary" type="submit" value="Login">
+            </fieldset>
+        </form>
+        <p style="text-align: center;">No account? <a href="/register">Sign up here</a>.</p>
+    </div>
+</div>
+{% endblock %}

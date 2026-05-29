@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="column column-50 column-offset-25">
+        <h2>Edit Profile</h2>
+        <p>Username: <strong>{{ user.username }}</strong></p>
+
+        <form method="POST">
+            <fieldset>
+                <label for="major">Major</label>
+                <input type="text" id="major" name="major" value="{{ user.major }}" required>
+
+                <label for="course">Target Course</label>
+                <input type="text" id="course" name="course" value="{{ user.course }}" required>
+
+                <label for="available_time">Availability</label>
+                <select id="available_time" name="available_time">
+                    {% for opt in ['Mornings', 'Afternoons', 'Evenings', 'Weekends'] %}
+                    <option value="{{ opt }}" {% if user.available_time == opt %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="new_password">New Password <small>(leave blank to keep current)</small></label>
+                <input type="password" id="new_password" name="new_password" placeholder="New password">
+
+                <input class="button-primary" type="submit" value="Save Changes">
+                <a class="button button-clear" href="/dashboard">Cancel</a>
+            </fieldset>
+        </form>
+    </div>
+</div>
+{% endblock %}

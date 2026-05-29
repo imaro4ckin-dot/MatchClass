@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="column column-50 column-offset-25">
+        <h2 style="text-align: center;">Create an Account</h2>
+
+        <form method="POST">
+            <fieldset>
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+
+                <label for="major">Major</label>
+                <input type="text" id="major" name="major" required>
+
+                <label for="course">Target Course (e.g., CS101)</label>
+                <input type="text" id="course" name="course" required>
+
+                <label for="available_time">Availability</label>
+                <select id="available_time" name="available_time">
+                    <option value="Mornings">Mornings</option>
+                    <option value="Afternoons">Afternoons</option>
+                    <option value="Evenings">Evenings</option>
+                    <option value="Weekends">Weekends</option>
+                </select>
+
+                <input class="button-primary" type="submit" value="Sign Up">
+            </fieldset>
+        </form>
+        <p style="text-align: center;">Already have an account? <a href="/login">Login here</a>.</p>
+    </div>
+</div>
+{% endblock %}

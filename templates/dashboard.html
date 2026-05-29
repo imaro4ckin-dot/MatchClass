@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Welcome, {{ user.username }}!</h2>
+    <a class="button" href="/create_group">+ Create a Group</a>
+</div>
+<p>Your course: <strong>{{ user.course }}</strong> &nbsp;|&nbsp; Major: {{ user.major }} &nbsp;|&nbsp; Available: {{ user.available_time }}</p>
+<hr>
+
+<div class="row">
+    <!-- STUDENT MATCHES -->
+    <div class="column">
+        <h3>Student Matches</h3>
+        {% if matches %}
+            <ul>
+            {% for match in matches %}
+                <li>
+                    <strong>{{ match.username }}</strong>
+                    <small>({{ match.major }} &mdash; Available: {{ match.available_time }})</small>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No other students found for <strong>{{ user.course }}</strong> yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- STUDY GROUPS -->
+    <div class="column">
+        <h3>Study Groups for {{ user.course }}</h3>
+        {% if all_groups %}
+            <ul style="list-style: none; padding: 0;">
+            {% for group in all_groups %}
+                <li style="margin-bottom: 1.2rem; padding: .8rem; border: 1px solid #eee; border-radius: 4px;">
+                    <strong>{{ group.name }}</strong>
+                    <span class="badge badge-{% if group.is_public %}public{% else %}private{% endif %}" style="margin-left: .5rem;">
+                        {% if group.is_public %}Public{% else %}Private{% endif %}
+                    </span><br>
+                    <small>Members: {{ group.members|length }}</small><br>
+                    <div style="margin-top: .5rem;">
+                    {% if user in group.members %}
+                        <a class="button button-outline button-small" href="/group/{{ group.id }}">View Group</a>
+                        {% if user.id != group.creator_id %}
+                        <a class="button button-clear button-small" href="/leave_group/{{ group.id }}"
+                           onclick="return confirm('Leave this group?')">Leave</a>
+                        {% endif %}
+                    {% else %}
+                        <a class="button button-small" href="/join_group/{{ group.id }}">
+                            {% if group.is_public %}Join{% else %}Request to Join{% endif %}
+                        </a>
+                    {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No groups yet. <a href="/create_group">Create one!</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

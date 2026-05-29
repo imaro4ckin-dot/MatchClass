@@ -1,0 +1,37 @@
+# Flask instance folder (contains database)
+instance/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Python virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
