@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Notifications</h2>
+
+{% if notifs %}
+    <ul style="list-style:none;padding:0;">
+    {% for n in notifs %}
+        <li style="padding:.8rem 1rem;margin-bottom:.5rem;border-radius:4px;
+                   background:{% if not n.is_read %}#f3e5f5{% else %}#fafafa{% endif %};
+                   border-left:4px solid {% if not n.is_read %}#9b4dca{% else %}#ddd{% endif %};">
+            {% if n.link %}
+                <a href="{{ n.link }}" style="color:inherit;text-decoration:none;">{{ n.message }}</a>
+            {% else %}
+                {{ n.message }}
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p style="color:#aaa;">No notifications yet.</p>
+{% endif %}
+{% endblock %}

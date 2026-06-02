@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;">
+    <h2>{{ profile_user.username }}</h2>
+    <a class="button button-outline" href="/dashboard">Back to Dashboard</a>
+</div>
+
+<table style="width:auto;">
+    <tr>
+        <td style="padding-right:2rem;color:#777;">Major</td>
+        <td><strong>{{ profile_user.major }}</strong></td>
+    </tr>
+    <tr>
+        <td style="padding-right:2rem;color:#777;">Course</td>
+        <td><strong>{{ profile_user.course }}</strong></td>
+    </tr>
+    <tr>
+        <td style="padding-right:2rem;color:#777;">Availability</td>
+        <td><strong>{{ profile_user.available_time }}</strong></td>
+    </tr>
+    <tr>
+        <td style="padding-right:2rem;color:#777;">Groups</td>
+        <td><strong>{{ profile_user.groups | length }}</strong></td>
+    </tr>
+</table>
+
+{% if shared_groups %}
+<h4 style="margin-top:2rem;">Groups you share</h4>
+<ul style="list-style:none;padding:0;">
+{% for group in shared_groups %}
+    <li style="margin-bottom:.5rem;">
+        <a href="/group/{{ group.id }}">{{ group.name }}</a>
+        <small style="color:#777;">({{ group.course }})</small>
+    </li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endblock %}
