@@ -53,7 +53,19 @@
     <div>
         <a href="/dashboard">Dashboard</a>
         <a href="/search">Search Groups</a>
-        <a href="/profile">Profile</a>
+        <a href="/notifications" style="position:relative;">
+            Notifications
+            {% set unread = namespace(count=0) %}
+            {% if session.user_id %}
+                {# count unread via a query injected in context — fallback to 0 if not available #}
+                {% if unread_count is defined and unread_count > 0 %}
+                    <span style="background:#e53935;color:#fff;border-radius:50%;padding:1px 6px;
+                                 font-size:.9rem;position:absolute;top:-6px;right:-10px;">{{ unread_count }}</span>
+                {% endif %}
+            {% endif %}
+        </a>
+        <a href="/user/{{ session.username }}">{{ session.username }}</a>
+        <a href="/profile">Settings</a>
         <a href="/logout">Logout</a>
     </div>
 </nav>

@@ -14,6 +14,12 @@
                 <label for="contact_info">Contact Info (Discord/Email)</label>
                 <input type="text" id="contact_info" name="contact_info" required>
 
+                <label for="description">Description <small>(optional)</small></label>
+                <textarea id="description" name="description" placeholder="What will this group focus on? Any rules or expectations?" rows="3" style="resize:vertical;"></textarea>
+
+                <label for="max_members">Member Limit <small>(optional — leave blank for unlimited)</small></label>
+                <input type="number" id="max_members" name="max_members" min="2" placeholder="e.g. 6">
+
                 <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
                     <input type="checkbox" name="is_public" id="is_public" checked style="width:auto;margin:0;">
                     Public group (anyone can join instantly; uncheck for private/request-only)

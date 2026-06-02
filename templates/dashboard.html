@@ -16,7 +16,7 @@
             <ul>
             {% for match in matches %}
                 <li>
-                    <strong>{{ match.username }}</strong>
+                    <strong><a href="/user/{{ match.username }}">{{ match.username }}</a></strong>
                     <small>({{ match.major }} &mdash; Available: {{ match.available_time }})</small>
                 </li>
             {% endfor %}
@@ -37,7 +37,13 @@
                     <span class="badge badge-{% if group.is_public %}public{% else %}private{% endif %}" style="margin-left: .5rem;">
                         {% if group.is_public %}Public{% else %}Private{% endif %}
                     </span><br>
-                    <small>Members: {{ group.members|length }}</small><br>
+                    <small>Members: {{ group.members|length }}{% if group.max_members %}/{{ group.max_members }}{% endif %}</small>
+                    {% if group.max_members and group.members|length >= group.max_members %}
+                    <span class="badge" style="background:#fdecea;color:#e53935;margin-left:.4rem;">Full</span>
+                    {% endif %}
+                    {% if group.description %}
+                    <small style="display:block;color:#777;margin-top:.2rem;">{{ group.description }}</small>
+                    {% endif %}<br>
                     <div style="margin-top: .5rem;">
                     {% if user in group.members %}
                         <a class="button button-outline button-small" href="/group/{{ group.id }}">View Group</a>
@@ -45,6 +51,8 @@
                         <a class="button button-clear button-small" href="/leave_group/{{ group.id }}"
                            onclick="return confirm('Leave this group?')">Leave</a>
                         {% endif %}
+                    {% elif group.max_members and group.members|length >= group.max_members %}
+                        <button class="button button-small" disabled style="opacity:.5;cursor:not-allowed;">Full</button>
                     {% else %}
                         <a class="button button-small" href="/join_group/{{ group.id }}">
                             {% if group.is_public %}Join{% else %}Request to Join{% endif %}

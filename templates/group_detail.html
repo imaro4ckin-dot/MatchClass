@@ -10,12 +10,16 @@
     <a class="button button-outline" href="/dashboard">Back to Dashboard</a>
 </div>
 <p>Course: <strong>{{ group.course }}</strong> &nbsp;|&nbsp; Contact: {{ group.contact_info }}</p>
+{% if group.description %}
+<p style="color:#555;">{{ group.description }}</p>
+{% endif %}
 
 {% if user.id == group.creator_id %}
 <form method="POST" action="/delete_group/{{ group.id }}"
       onsubmit="return confirm('Delete this group permanently?')" style="display:inline;">
     <button class="button button-outline" style="border-color:#e53935;color:#e53935;">Delete Group</button>
 </form>
+<a class="button button-outline" href="/edit_group/{{ group.id }}" style="margin-left:.5rem;">Edit Group</a>
 {% endif %}
 
 <hr>
@@ -28,6 +32,7 @@
     {% for req in pending_requests %}
         <li style="margin-bottom:.4rem;">
             {{ req.requester.username }}
+            <a href="/user/{{ req.requester.username }}" style="font-size:.9rem;margin-left:.3rem;">(view profile)</a>
             <form method="POST" action="/approve_request/{{ req.id }}" style="display:inline;">
                 <button class="button button-small" style="margin-left:.5rem;">Approve</button>
             </form>
@@ -52,6 +57,7 @@
                     <tr>
                         <th>Topic</th>
                         <th>Date &amp; Time</th>
+                        <th>Location / Link</th>
                         <th>RSVP</th>
                         <th></th>
                     </tr>
@@ -61,6 +67,17 @@
                     <tr>
                         <td>{{ meeting.title }}</td>
                         <td>{{ meeting.date_time.replace('T', ' at ') }}</td>
+                        <td>
+                            {% if meeting.location %}
+                                {% if meeting.location.startswith('http') %}
+                                    <a href="{{ meeting.location }}" target="_blank" rel="noopener">Join link</a>
+                                {% else %}
+                                    {{ meeting.location }}
+                                {% endif %}
+                            {% else %}
+                                <small style="color:#aaa;">—</small>
+                            {% endif %}
+                        </td>
                         <td>
                             {% set my_rsvp = user_rsvps.get(meeting.id) %}
                             {% set yes_count = meeting.rsvps | selectattr('status', 'equalto', 'yes') | list | length %}
@@ -101,6 +118,9 @@
                 <label for="date_time">Date &amp; Time</label>
                 <input type="datetime-local" id="date_time" name="date_time" required>
 
+                <label for="location">Location / Link <small>(optional — room number or https://...)</small></label>
+                <input type="text" id="location" name="location" placeholder="e.g., Library Room 204 or https://meet.google.com/...">
+
                 <input class="button-primary" type="submit" value="Schedule Meeting">
             </fieldset>
         </form>
@@ -136,15 +156,41 @@
                     emptyNote.style.display = 'none';
                     const div = document.createElement('div');
                     div.style.marginBottom = '.8rem';
+                    div.dataset.msgId = m.id;
                     const nameStyle = m.author === me ? 'color:#9b4dca;' : '';
+                    const reactionHtml = ['👍','❤️','😂'].map(function(e) {
+                        const count = (m.reactions && m.reactions[e]) ? m.reactions[e] : 0;
+                        return '<button onclick="react(' + m.id + ',\'' + e + '\',this)" ' +
+                               'style="background:none;border:1px solid #ddd;border-radius:10px;' +
+                               'padding:1px 6px;cursor:pointer;font-size:1.1rem;margin-right:3px;">' +
+                               e + (count > 0 ? ' <small>' + count + '</small>' : '') + '</button>';
+                    }).join('');
                     div.innerHTML =
                         '<strong style="' + nameStyle + '">' + escapeHtml(m.author) + '</strong>' +
                         '<small style="color:#aaa;margin-left:.5rem;">' + escapeHtml(m.timestamp) + '</small><br>' +
-                        '<span>' + escapeHtml(m.body) + '</span>';
+                        '<span>' + escapeHtml(m.body) + '</span><br>' +
+                        '<div style="margin-top:3px;">' + reactionHtml + '</div>';
                     box.appendChild(div);
                     lastId = m.id;
                 });
                 box.scrollTop = box.scrollHeight;
+            }
+
+            function react(msgId, emoji, btn) {
+                fetch('/react/' + msgId + '/' + encodeURIComponent(emoji), {method:'POST',
+                    headers:{'Content-Type':'application/x-www-form-urlencoded'}})
+                .then(function(r){return r.json();})
+                .then(function(counts){
+                    ['👍','❤️','😂'].forEach(function(e){
+                        const btns = btn.parentNode.querySelectorAll('button');
+                        btns.forEach(function(b){
+                            if(b.textContent.startsWith(e)){
+                                const c = counts[e];
+                                b.innerHTML = e + (c > 0 ? ' <small>' + c + '</small>' : '');
+                            }
+                        });
+                    });
+                });
             }
 
             function poll() {
@@ -177,21 +223,31 @@
 
     <!-- RIGHT: MEMBERS -->
     <div class="column column-40" style="border-left:1px solid #eee;padding-left:2rem;">
-        <h3>Members ({{ group.members|length }})</h3>
+        <h3>Members ({{ group.members|length }}{% if group.max_members %}/{{ group.max_members }}{% endif %}
+            {% if group.max_members and group.members|length >= group.max_members %}
+                <span class="badge" style="background:#fdecea;color:#e53935;font-size:.9rem;">Full</span>
+            {% endif %}
+        </h3>
         <ul style="list-style:none;padding:0;">
         {% for member in group.members %}
             <li style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
                 <span>
-                    {{ member.username }}
+                    <a href="/user/{{ member.username }}">{{ member.username }}</a>
                     {% if member.id == group.creator_id %}
                         <small style="color:#9b4dca;">(creator)</small>
                     {% endif %}
                 </span>
                 {% if user.id == group.creator_id and member.id != user.id %}
+                <div style="display:flex;gap:.3rem;">
                 <form method="POST" action="/kick_member/{{ group.id }}/{{ member.id }}"
                       onsubmit="return confirm('Remove {{ member.username }}?')">
                     <button class="button button-outline button-small" style="border-color:#e53935;color:#e53935;margin:0;">Remove</button>
                 </form>
+                <form method="POST" action="/transfer_ownership/{{ group.id }}/{{ member.id }}"
+                      onsubmit="return confirm('Transfer ownership to {{ member.username }}? You will no longer be the creator.')">
+                    <button class="button button-outline button-small" style="margin:0;">Make Owner</button>
+                </form>
+                </div>
                 {% endif %}
             </li>
         {% endfor %}
