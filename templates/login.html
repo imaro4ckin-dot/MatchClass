@@ -1,23 +1,75 @@
-{% extends "layout.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — MatchClass</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
 
-{% block content %}
-<div class="row">
-    <div class="column column-50 column-offset-25">
-        <h1 style="text-align: center;">StudyMatch</h1>
-        <p style="text-align: center;">Find your perfect study group.</p>
-
-        <form method="POST">
-            <fieldset>
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
-
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-
-                <input class="button-primary" type="submit" value="Login">
-            </fieldset>
-        </form>
-        <p style="text-align: center;">No account? <a href="/register">Sign up here</a>.</p>
-    </div>
+<div class="flash-stack">
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% for category, message in messages %}
+    <div class="flash flash--{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
 </div>
-{% endblock %}
+
+<div class="auth-page">
+  <div class="auth-page__hero">
+    <div class="auth-hero__number">MC</div>
+    <div class="auth-hero__logo">
+      MatchClass<span class="nav__brand-dot"></span>
+    </div>
+    <div class="auth-hero__tagline">
+      Study smarter,<br><em>together.</em>
+    </div>
+    <p class="auth-hero__desc">
+      Find classmates in your course, join study groups, schedule sessions, and collaborate — all in one place.
+    </p>
+    <div class="auth-hero__stats">
+      <div>
+        <div class="auth-hero__stat-number">∞</div>
+        <div class="auth-hero__stat-label">Study Groups</div>
+      </div>
+      <div>
+        <div class="auth-hero__stat-number">24/7</div>
+        <div class="auth-hero__stat-label">Group Chat</div>
+      </div>
+      <div>
+        <div class="auth-hero__stat-number">Free</div>
+        <div class="auth-hero__stat-label">Always</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-page__form">
+    <div class="auth-form-box">
+      <div class="auth-form-box__eyebrow">Welcome back</div>
+      <h1 class="auth-form-box__title">Sign in</h1>
+      <p class="auth-form-box__sub">Enter your credentials to continue.</p>
+
+      <form method="POST">
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input class="form-input" type="text" id="username" name="username" placeholder="your_username" required autofocus>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input class="form-input" type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+        <button class="btn btn--primary btn--full btn--lg" type="submit">Sign In</button>
+      </form>
+
+      <p class="auth-form-box__footer">
+        No account? <a href="/register">Create one here</a>.
+      </p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

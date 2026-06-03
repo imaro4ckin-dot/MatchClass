@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width: 680px; padding-top: 2.5rem;">
+
+  <div class="dm-header">
+    <a class="btn btn--ghost btn--sm" href="/messages">← Back</a>
+    <div class="match-avatar" style="width:36px; height:36px; font-size:.9rem;">{{ other.username[0].upper() }}</div>
+    <div>
+      <div class="dm-header__name">
+        <a href="/user/{{ other.username }}" style="color: var(--cream); text-decoration:none;">{{ other.username }}</a>
+      </div>
+      <div style="font-size:.75rem; color: var(--cream-dim);">{{ other.major }} · {{ other.available_time }}</div>
+    </div>
+  </div>
+
+  <div id="chat-box" class="chat-box" style="min-height: 340px;">
+    <p id="chat-empty" class="chat-empty" style="{% if messages %}display:none;{% endif %}">
+      No messages yet. Say hello!
+    </p>
+    {% for m in messages %}
+    <div class="chat-message {% if m.sender_id == user.id %}chat-message--me{% endif %}" data-msg-id="{{ m.id }}">
+      <div class="chat-message__header">
+        <span class="chat-message__author {% if m.sender_id == user.id %}chat-message__author--me{% endif %}">
+          {% if m.sender_id == user.id %}You{% else %}{{ other.username }}{% endif %}
+        </span>
+        <span class="chat-message__time">{{ m.timestamp }}</span>
+      </div>
+      <div class="chat-message__body">{{ m.body }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <form id="dm-form" class="chat-input-row mt-2">
+    <input class="form-input" type="text" id="dm-input" placeholder="Write a message…" required>
+    <button class="btn btn--primary" type="submit">Send</button>
+  </form>
+
+  <script>
+  (function(){
+    const me = {{ user.id }};
+    const myName = {{ user.username | tojson }};
+    const otherName = {{ other.username | tojson }};
+    const box = document.getElementById('chat-box');
+    const emptyNote = document.getElementById('chat-empty');
+    let lastId = {{ last_id }};
+
+    function escapeHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function appendMessages(msgs) {
+        msgs.forEach(function(m) {
+            emptyNote.style.display = 'none';
+            const isMe = m.is_mine;
+            const div = document.createElement('div');
+            div.className = 'chat-message' + (isMe ? ' chat-message--me' : '');
+            div.dataset.msgId = m.id;
+            div.innerHTML =
+                '<div class="chat-message__header">' +
+                  '<span class="chat-message__author' + (isMe ? ' chat-message__author--me' : '') + '">' +
+                    (isMe ? 'You' : escapeHtml(otherName)) +
+                  '</span>' +
+                  '<span class="chat-message__time">' + escapeHtml(m.timestamp) + '</span>' +
+                '</div>' +
+                '<div class="chat-message__body">' + escapeHtml(m.body) + '</div>';
+            box.appendChild(div);
+            lastId = m.id;
+        });
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function poll() {
+        fetch('/messages/{{ other.username }}/poll?since=' + lastId)
+            .then(function(r){ return r.json(); })
+            .then(appendMessages)
+            .catch(function(){});
+    }
+
+    // Scroll to bottom on load
+    box.scrollTop = box.scrollHeight;
+
+    poll();
+    setInterval(poll, 2000);
+
+    document.getElementById('dm-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const input = document.getElementById('dm-input');
+        const body = input.value.trim();
+        if (!body) return;
+        input.value = '';
+        fetch('/messages/{{ other.username }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'body=' + encodeURIComponent(body)
+        }).then(poll);
+    });
+  })();
+  </script>
+
+</div>
+{% endblock %}

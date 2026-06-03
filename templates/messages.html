@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-wrapper" style="max-width: 680px; padding-top: 2.5rem;">
+
+  <div class="page-header">
+    <div class="page-header__row">
+      <div>
+        <div class="page-header__eyebrow">Inbox</div>
+        <h1>Messages</h1>
+      </div>
+    </div>
+  </div>
+
+  {% if conversations %}
+  <div class="dm-list card card--static" style="padding: 0; overflow: hidden;">
+    {% for conv in conversations %}
+    <a class="dm-item dm-item--{% if conv.unread %}unread{% else %}read{% endif %}"
+       href="/messages/{{ conv.username }}">
+      <div class="dm-item__avatar">
+        <div class="match-avatar" style="width:38px; height:38px; font-size:.95rem;">{{ conv.username[0].upper() }}</div>
+      </div>
+      <div class="dm-item__body">
+        <div class="dm-item__name">{{ conv.username }}</div>
+        <div class="dm-item__preview">{{ conv.preview }}</div>
+      </div>
+      <div class="dm-item__meta">
+        <div class="dm-item__time">{{ conv.timestamp }}</div>
+        {% if conv.unread %}
+        <div class="dm-unread-dot"></div>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    No messages yet.<br>
+    Visit a classmate's profile to start a conversation.
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,257 +1,575 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center;">
-    <h2>{{ group.name }}
-        <span class="badge badge-{% if group.is_public %}public{% else %}private{% endif %}">
+<div class="page-wrapper">
+
+  <!-- Group Header -->
+  <div class="page-header">
+    <div class="page-header__row">
+      <div>
+        <div class="page-header__eyebrow">Study Group</div>
+        <h1 style="display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;">
+          {{ group.name }}
+          <span class="badge badge--{% if group.is_public %}public{% else %}private{% endif %}">
             {% if group.is_public %}Public{% else %}Private{% endif %}
-        </span>
-    </h2>
-    <a class="button button-outline" href="/dashboard">Back to Dashboard</a>
-</div>
-<p>Course: <strong>{{ group.course }}</strong> &nbsp;|&nbsp; Contact: {{ group.contact_info }}</p>
-{% if group.description %}
-<p style="color:#555;">{{ group.description }}</p>
-{% endif %}
-
-{% if user.id == group.creator_id %}
-<form method="POST" action="/delete_group/{{ group.id }}"
-      onsubmit="return confirm('Delete this group permanently?')" style="display:inline;">
-    <button class="button button-outline" style="border-color:#e53935;color:#e53935;">Delete Group</button>
-</form>
-<a class="button button-outline" href="/edit_group/{{ group.id }}" style="margin-left:.5rem;">Edit Group</a>
-{% endif %}
-
-<hr>
-
-<!-- PENDING JOIN REQUESTS (creator only) -->
-{% if pending_requests %}
-<div style="background:#fff8e1;border-left:4px solid #ffc107;padding:.8rem 1.2rem;margin-bottom:1.5rem;border-radius:2px;">
-    <strong>Pending join requests:</strong>
-    <ul style="margin:.5rem 0 0 1rem;">
-    {% for req in pending_requests %}
-        <li style="margin-bottom:.4rem;">
-            {{ req.requester.username }}
-            <a href="/user/{{ req.requester.username }}" style="font-size:.9rem;margin-left:.3rem;">(view profile)</a>
-            <form method="POST" action="/approve_request/{{ req.id }}" style="display:inline;">
-                <button class="button button-small" style="margin-left:.5rem;">Approve</button>
-            </form>
-            <form method="POST" action="/deny_request/{{ req.id }}" style="display:inline;">
-                <button class="button button-outline button-small" style="border-color:#e53935;color:#e53935;">Deny</button>
-            </form>
-        </li>
-    {% endfor %}
-    </ul>
-</div>
-{% endif %}
-
-<div class="row">
-    <!-- LEFT: MEETINGS + MESSAGES -->
-    <div class="column column-60">
-
-        <!-- MEETINGS -->
-        <h3>Upcoming Meetings</h3>
-        {% if group.meetings %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Topic</th>
-                        <th>Date &amp; Time</th>
-                        <th>Location / Link</th>
-                        <th>RSVP</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for meeting in group.meetings %}
-                    <tr>
-                        <td>{{ meeting.title }}</td>
-                        <td>{{ meeting.date_time.replace('T', ' at ') }}</td>
-                        <td>
-                            {% if meeting.location %}
-                                {% if meeting.location.startswith('http') %}
-                                    <a href="{{ meeting.location }}" target="_blank" rel="noopener">Join link</a>
-                                {% else %}
-                                    {{ meeting.location }}
-                                {% endif %}
-                            {% else %}
-                                <small style="color:#aaa;">—</small>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% set my_rsvp = user_rsvps.get(meeting.id) %}
-                            {% set yes_count = meeting.rsvps | selectattr('status', 'equalto', 'yes') | list | length %}
-                            <small>{{ yes_count }} going</small><br>
-                            <form method="POST" style="display:inline;">
-                                <input type="hidden" name="action" value="rsvp_placeholder">
-                            </form>
-                            <form method="POST" action="/rsvp/{{ meeting.id }}/yes" style="display:inline;">
-                                <button class="button button-small{% if my_rsvp != 'yes' %} button-outline{% endif %}">Yes</button>
-                            </form>
-                            <form method="POST" action="/rsvp/{{ meeting.id }}/no" style="display:inline;">
-                                <button class="button button-small{% if my_rsvp != 'no' %} button-outline{% endif %}" style="{% if my_rsvp == 'no' %}background:#e53935;border-color:#e53935;{% endif %}">No</button>
-                            </form>
-                        </td>
-                        <td>
-                            {% if user in group.members %}
-                            <form method="POST" action="/delete_meeting/{{ meeting.id }}"
-                                  onsubmit="return confirm('Delete this meeting?')">
-                                <button class="button button-outline button-small" style="border-color:#e53935;color:#e53935;">Delete</button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No meetings scheduled yet.</p>
-        {% endif %}
-
-        <h4>Schedule a Meeting</h4>
-        <form method="POST">
-            <input type="hidden" name="action" value="schedule_meeting">
-            <fieldset>
-                <label for="title">Topic</label>
-                <input type="text" id="title" name="title" placeholder="e.g., Chapter 4 Review" required>
-
-                <label for="date_time">Date &amp; Time</label>
-                <input type="datetime-local" id="date_time" name="date_time" required>
-
-                <label for="location">Location / Link <small>(optional — room number or https://...)</small></label>
-                <input type="text" id="location" name="location" placeholder="e.g., Library Room 204 or https://meet.google.com/...">
-
-                <input class="button-primary" type="submit" value="Schedule Meeting">
-            </fieldset>
-        </form>
-
-        <hr>
-
-        <!-- MESSAGE BOARD -->
-        <h3>Group Chat</h3>
-        <div id="chat-box" style="max-height:300px;overflow-y:auto;border:1px solid #eee;padding:1rem;border-radius:4px;margin-bottom:1rem;">
-            <p id="chat-empty" style="color:#aaa;margin:0;">No messages yet. Say hello!</p>
+          </span>
+          {% if group.max_members and group.members|length >= group.max_members %}
+          <span class="badge badge--full">Full</span>
+          {% endif %}
+        </h1>
+        <div class="page-header__meta">
+          <span class="page-header__meta-item">Course: <strong>{{ group.course }}</strong></span>
+          <span class="page-header__meta-item">&middot; Contact: <strong>{{ group.contact_info }}</strong></span>
         </div>
-        <form id="msg-form">
-            <div style="display:flex;gap:.5rem;">
-                <input type="text" id="msg-input" placeholder="Write a message..." required style="margin:0;flex:1;">
-                <button class="button-primary" type="submit" style="margin:0;width:auto;">Send</button>
-            </div>
+        {% if group.tags %}
+        <div class="tag-list" style="margin-top:.5rem;">
+          {% for tag in group.tags %}
+          <span class="tag">{{ tag.name }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if group.description %}
+        <p class="text-muted mt-2">{{ group.description }}</p>
+        {% endif %}
+      </div>
+      <div style="display:flex; gap:.5rem; align-items:flex-start; flex-shrink:0; flex-wrap:wrap;">
+        {% if user.id == group.creator_id %}
+        <a class="btn btn--secondary btn--sm" href="/edit_group/{{ group.id }}">Edit</a>
+        <form method="POST" action="/delete_group/{{ group.id }}"
+              onsubmit="return confirm('Delete this group permanently?')" style="display:inline;">
+          <button class="btn btn--danger btn--sm" type="submit">Delete</button>
         </form>
-
-        <script>
-        (function () {
-            const groupId = {{ group.id }};
-            const me = {{ user.username | tojson }};
-            const box = document.getElementById('chat-box');
-            const emptyNote = document.getElementById('chat-empty');
-            let lastId = 0;
-
-            function escapeHtml(s) {
-                return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            }
-
-            function appendMessages(msgs) {
-                msgs.forEach(function(m) {
-                    emptyNote.style.display = 'none';
-                    const div = document.createElement('div');
-                    div.style.marginBottom = '.8rem';
-                    div.dataset.msgId = m.id;
-                    const nameStyle = m.author === me ? 'color:#9b4dca;' : '';
-                    const reactionHtml = ['👍','❤️','😂'].map(function(e) {
-                        const count = (m.reactions && m.reactions[e]) ? m.reactions[e] : 0;
-                        return '<button onclick="react(' + m.id + ',\'' + e + '\',this)" ' +
-                               'style="background:none;border:1px solid #ddd;border-radius:10px;' +
-                               'padding:1px 6px;cursor:pointer;font-size:1.1rem;margin-right:3px;">' +
-                               e + (count > 0 ? ' <small>' + count + '</small>' : '') + '</button>';
-                    }).join('');
-                    div.innerHTML =
-                        '<strong style="' + nameStyle + '">' + escapeHtml(m.author) + '</strong>' +
-                        '<small style="color:#aaa;margin-left:.5rem;">' + escapeHtml(m.timestamp) + '</small><br>' +
-                        '<span>' + escapeHtml(m.body) + '</span><br>' +
-                        '<div style="margin-top:3px;">' + reactionHtml + '</div>';
-                    box.appendChild(div);
-                    lastId = m.id;
-                });
-                box.scrollTop = box.scrollHeight;
-            }
-
-            function react(msgId, emoji, btn) {
-                fetch('/react/' + msgId + '/' + encodeURIComponent(emoji), {method:'POST',
-                    headers:{'Content-Type':'application/x-www-form-urlencoded'}})
-                .then(function(r){return r.json();})
-                .then(function(counts){
-                    ['👍','❤️','😂'].forEach(function(e){
-                        const btns = btn.parentNode.querySelectorAll('button');
-                        btns.forEach(function(b){
-                            if(b.textContent.startsWith(e)){
-                                const c = counts[e];
-                                b.innerHTML = e + (c > 0 ? ' <small>' + c + '</small>' : '');
-                            }
-                        });
-                    });
-                });
-            }
-
-            function poll() {
-                fetch('/group/' + groupId + '/messages?since=' + lastId)
-                    .then(function(r){ return r.json(); })
-                    .then(appendMessages)
-                    .catch(function(){});
-            }
-
-            // Initial load then poll every 2 s
-            poll();
-            setInterval(poll, 2000);
-
-            // Send message via fetch (no page reload)
-            document.getElementById('msg-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const input = document.getElementById('msg-input');
-                const body = input.value.trim();
-                if (!body) return;
-                input.value = '';
-                fetch('/group/' + groupId, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: 'action=post_message&body=' + encodeURIComponent(body)
-                }).then(poll);
-            });
-        })();
-        </script>
+        {% endif %}
+        <a class="btn btn--ghost btn--sm" href="/dashboard">← Dashboard</a>
+      </div>
     </div>
+  </div>
 
-    <!-- RIGHT: MEMBERS -->
-    <div class="column column-40" style="border-left:1px solid #eee;padding-left:2rem;">
-        <h3>Members ({{ group.members|length }}{% if group.max_members %}/{{ group.max_members }}{% endif %}
-            {% if group.max_members and group.members|length >= group.max_members %}
-                <span class="badge" style="background:#fdecea;color:#e53935;font-size:.9rem;">Full</span>
-            {% endif %}
-        </h3>
-        <ul style="list-style:none;padding:0;">
-        {% for member in group.members %}
-            <li style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
-                <span>
-                    <a href="/user/{{ member.username }}">{{ member.username }}</a>
-                    {% if member.id == group.creator_id %}
-                        <small style="color:#9b4dca;">(creator)</small>
-                    {% endif %}
+  <!-- Pinned Announcement -->
+  {% if group.pinned_announcement or user.id == group.creator_id %}
+  <div class="pinned-banner" id="pinned-section">
+    <div class="pinned-banner__label">📌 Pinned</div>
+    <div class="pinned-banner__content" id="pinned-text">
+      {% if group.pinned_announcement %}
+        {{ group.pinned_announcement }}
+      {% else %}
+        <span class="text-dim">No pinned announcement yet.</span>
+      {% endif %}
+    </div>
+    {% if user.id == group.creator_id %}
+    <button class="pinned-banner__edit" onclick="togglePinEdit()">✏️ Edit</button>
+    {% endif %}
+  </div>
+  {% if user.id == group.creator_id %}
+  <div id="pin-form" style="display:none; margin-bottom:1.25rem;">
+    <form method="POST" action="/group/{{ group.id }}/pin" style="display:flex; gap:.5rem; align-items:flex-start;">
+      <textarea class="form-input" name="announcement" rows="2" style="flex:1; resize:vertical;"
+                placeholder="Write a pinned announcement…">{{ group.pinned_announcement or '' }}</textarea>
+      <div style="display:flex; flex-direction:column; gap:.4rem;">
+        <button class="btn btn--primary btn--sm" type="submit">Save</button>
+        <button class="btn btn--ghost btn--sm" type="button" onclick="togglePinEdit()">Cancel</button>
+      </div>
+    </form>
+  </div>
+  <script>
+  function togglePinEdit(){
+    const f = document.getElementById('pin-form');
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  }
+  </script>
+  {% endif %}
+  {% endif %}
+
+  <!-- Reviews Summary -->
+  {% if reviews %}
+  <div class="rating-summary mb-3">
+    <div class="rating-summary__score">{{ avg_rating | round(1) }}</div>
+    <div class="review-stars">
+      {% for i in range(1, 6) %}
+      <span style="font-size:1rem; color:{% if i <= avg_rating | round %}var(--amber){% else %}var(--ink-mid){% endif %};">★</span>
+      {% endfor %}
+    </div>
+    <div class="rating-summary__count">{{ reviews|length }} review{% if reviews|length != 1 %}s{% endif %}</div>
+  </div>
+  {% endif %}
+
+  <!-- Pending Join Requests -->
+  {% if pending_requests %}
+  <div class="pending-banner mb-3">
+    <div class="pending-banner__title">Pending Join Requests</div>
+    {% for req in pending_requests %}
+    <div class="pending-item">
+      <div style="display:flex; align-items:center; gap:.6rem;">
+        <div class="match-avatar">{{ req.requester.username[0].upper() }}</div>
+        <span style="font-size:.9rem; color: var(--cream);">
+          {{ req.requester.username }}
+          <a href="/user/{{ req.requester.username }}" style="font-size:.78rem; color: var(--cream-dim); margin-left:.3rem;">(profile)</a>
+        </span>
+      </div>
+      <div style="display:flex; gap:.4rem;">
+        <form method="POST" action="/approve_request/{{ req.id }}" style="display:inline;">
+          <button class="btn btn--primary btn--sm" type="submit">Approve</button>
+        </form>
+        <form method="POST" action="/deny_request/{{ req.id }}" style="display:inline;">
+          <button class="btn btn--danger btn--sm" type="submit">Deny</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Main Layout -->
+  <div class="group-detail-layout">
+
+    <!-- LEFT: Meetings + Reviews + Chat -->
+    <div>
+
+      <!-- Meetings -->
+      <div class="section-title">Upcoming Meetings</div>
+
+      {% if group.meetings %}
+      <div class="card card--static mb-3" style="padding: 0; overflow: hidden;">
+        <table class="meetings-table">
+          <thead>
+            <tr>
+              <th>Topic</th>
+              <th>Date &amp; Time</th>
+              <th>Location</th>
+              <th>RSVP</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for meeting in group.meetings %}
+            <tr>
+              <td style="color: var(--cream); font-weight: 500;">
+                {{ meeting.title }}
+                {% if meeting.recurrence and meeting.recurrence != 'none' %}
+                <span class="badge" style="font-size:.65rem; margin-left:.3rem; background: rgba(94,234,212,.12); color: var(--teal); border-color: rgba(94,234,212,.25);">
+                  {{ meeting.recurrence }}
                 </span>
-                {% if user.id == group.creator_id and member.id != user.id %}
-                <div style="display:flex;gap:.3rem;">
-                <form method="POST" action="/kick_member/{{ group.id }}/{{ member.id }}"
-                      onsubmit="return confirm('Remove {{ member.username }}?')">
-                    <button class="button button-outline button-small" style="border-color:#e53935;color:#e53935;margin:0;">Remove</button>
-                </form>
-                <form method="POST" action="/transfer_ownership/{{ group.id }}/{{ member.id }}"
-                      onsubmit="return confirm('Transfer ownership to {{ member.username }}? You will no longer be the creator.')">
-                    <button class="button button-outline button-small" style="margin:0;">Make Owner</button>
-                </form>
-                </div>
                 {% endif %}
-            </li>
+              </td>
+              <td>{{ meeting.date_time.replace('T', ' at ') }}</td>
+              <td>
+                {% if meeting.location %}
+                  {% if meeting.location.startswith('http') %}
+                    <a href="{{ meeting.location }}" target="_blank" rel="noopener" class="text-acid">Join link ↗</a>
+                  {% else %}
+                    {{ meeting.location }}
+                  {% endif %}
+                {% else %}
+                  <span class="text-dim">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {% set my_rsvp = user_rsvps.get(meeting.id) %}
+                {% set yes_count = meeting.rsvps | selectattr('status', 'equalto', 'yes') | list | length %}
+                {% set maybe_count = meeting.rsvps | selectattr('status', 'equalto', 'maybe') | list | length %}
+                <div style="display:flex; align-items:center; gap:.4rem; flex-wrap:wrap;">
+                  <small class="text-dim">{{ yes_count }} yes{% if maybe_count %} · {{ maybe_count }} maybe{% endif %}</small>
+                  <form method="POST" action="/rsvp/{{ meeting.id }}/yes" style="display:inline;">
+                    <button class="rsvp-btn rsvp-btn--yes {% if my_rsvp == 'yes' %}active{% endif %}" type="submit">✓ Yes</button>
+                  </form>
+                  <form method="POST" action="/rsvp/{{ meeting.id }}/maybe" style="display:inline;">
+                    <button class="rsvp-btn rsvp-btn--maybe {% if my_rsvp == 'maybe' %}active{% endif %}" type="submit">? Maybe</button>
+                  </form>
+                  <form method="POST" action="/rsvp/{{ meeting.id }}/no" style="display:inline;">
+                    <button class="rsvp-btn rsvp-btn--no {% if my_rsvp == 'no' %}active{% endif %}" type="submit">✕ No</button>
+                  </form>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex; gap:.35rem; align-items:center; flex-wrap:wrap;">
+                  <a class="ics-btn" href="/meeting/{{ meeting.id }}/export.ics" title="Export to calendar">📅 .ics</a>
+                  {% if user.id == group.creator_id %}
+                  <form method="POST" action="/delete_meeting/{{ meeting.id }}"
+                        onsubmit="return confirm('Delete this meeting?')">
+                    <button class="btn btn--danger btn--sm" type="submit">Delete</button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty-state" style="padding: 1.5rem; text-align:left; border-radius: var(--radius-lg); border: 1px dashed var(--ink-border);">
+          No meetings scheduled yet.
+        </div>
+      {% endif %}
+
+      <!-- Schedule Meeting Form -->
+      <div class="divider-label">Schedule a Meeting</div>
+      <div class="card card--static mb-3">
+        <form method="POST">
+          <input type="hidden" name="action" value="schedule_meeting">
+          <div class="grid-2" style="gap:1rem;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="title">Topic</label>
+              <input class="form-input" type="text" id="title" name="title" placeholder="e.g. Chapter 4 Review" required>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="date_time">Date &amp; Time</label>
+              <input class="form-input" type="datetime-local" id="date_time" name="date_time" required>
+            </div>
+          </div>
+          <div class="form-group mt-2">
+            <label class="form-label" for="location">Location / Link <span class="form-hint" style="display:inline;">(optional)</span></label>
+            <input class="form-input" type="text" id="location" name="location"
+                   placeholder="Library Room 204 or https://meet.google.com/...">
+          </div>
+          <div class="grid-2" style="gap:1rem;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="recurrence">Recurrence</label>
+              <select class="form-select" id="recurrence" name="recurrence">
+                <option value="none">Does not repeat</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Biweekly</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;" id="recurrence-end-wrap">
+              <label class="form-label" for="recurrence_end">Repeat Until <span class="form-hint" style="display:inline;">(optional)</span></label>
+              <input class="form-input" type="date" id="recurrence_end" name="recurrence_end">
+            </div>
+          </div>
+          <button class="btn btn--primary" type="submit" style="margin-top:1rem;">Schedule Meeting</button>
+        </form>
+        <script>
+        document.getElementById('recurrence').addEventListener('change', function(){
+          document.getElementById('recurrence-end-wrap').style.opacity = this.value === 'none' ? '.4' : '1';
+        });
+        </script>
+      </div>
+
+      <!-- Reviews Section -->
+      {% if can_review or reviews %}
+      <div class="divider-label">Reviews</div>
+
+      {% if can_review %}
+      <div class="card card--static mb-3">
+        <form method="POST" action="/group/{{ group.id }}/reviews">
+          <div class="form-group" style="margin-bottom:.75rem;">
+            <label class="form-label">Rating</label>
+            <div class="review-stars" id="star-row">
+              {% for i in range(1, 6) %}
+              <button type="button" class="star-btn" data-v="{{ i }}" onclick="setRating({{ i }})">★</button>
+              {% endfor %}
+            </div>
+            <input type="hidden" name="rating" id="rating-val" value="">
+          </div>
+          <div class="form-group" style="margin-bottom:.75rem;">
+            <label class="form-label" for="review-comment">Comment <span class="form-hint" style="display:inline;">(optional)</span></label>
+            <textarea class="form-input" id="review-comment" name="comment" rows="2"
+                      placeholder="What did you think of this group?"></textarea>
+          </div>
+          <button class="btn btn--primary btn--sm" type="submit">Submit Review</button>
+        </form>
+        <script>
+        function setRating(v){
+          document.getElementById('rating-val').value = v;
+          document.querySelectorAll('.star-btn').forEach(function(b){
+            b.classList.toggle('active', parseInt(b.dataset.v) <= v);
+          });
+        }
+        </script>
+      </div>
+      {% endif %}
+
+      {% if reviews %}
+      <div class="card card--static mb-3">
+        {% for r in reviews %}
+        <div class="review-item">
+          <div class="review-stars">
+            {% for i in range(1, 6) %}
+            <span style="font-size:.9rem; color:{% if i <= r.rating %}var(--amber){% else %}var(--ink-mid){% endif %};">★</span>
+            {% endfor %}
+            <span style="margin-left:.5rem; font-size:.8rem; color: var(--cream-dim);">
+              <a href="/user/{{ r.reviewer.username }}" style="color: var(--cream-dim);">{{ r.reviewer.username }}</a>
+            </span>
+          </div>
+          {% if r.comment %}
+          <p style="font-size:.875rem; color: var(--cream-muted); margin:.35rem 0 0;">{{ r.comment }}</p>
+          {% endif %}
+          <div style="font-size:.72rem; color: var(--cream-dim); margin-top:.25rem;">{{ r.timestamp }}</div>
+        </div>
         {% endfor %}
-        </ul>
+      </div>
+      {% endif %}
+      {% endif %}
+
+      <!-- Chat -->
+      <div class="divider-label">Group Chat</div>
+
+      <!-- Message search -->
+      <div style="position:relative; margin-bottom:.75rem;">
+        <input class="form-input" type="text" id="chat-search" placeholder="Search messages…" style="padding-left:2.2rem;">
+        <span style="position:absolute; left:.7rem; top:50%; transform:translateY(-50%); color: var(--cream-dim); pointer-events:none; font-size:.9rem;">🔍</span>
+      </div>
+
+      <div id="chat-box" class="chat-box">
+        <p id="chat-empty" class="chat-empty">No messages yet. Say hello!</p>
+      </div>
+
+      <form id="msg-form" class="chat-input-row mt-2" style="position:relative;">
+        <div style="flex:1; position:relative;">
+          <input class="form-input" type="text" id="msg-input" placeholder="Write a message… use @username to mention" required>
+          <div id="autocomplete" class="autocomplete-menu" style="display:none;"></div>
+        </div>
+        <button class="btn btn--primary" type="submit">Send</button>
+      </form>
+
+      <script>
+      // react() must be global so onclick handlers in dynamic HTML can reach it
+      function react(msgId, emoji, btn) {
+          fetch('/react/' + msgId + '/' + encodeURIComponent(emoji), {
+              method: 'POST',
+              headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+          })
+          .then(function(r){ return r.json(); })
+          .then(function(counts){
+              ['👍','❤️','😂'].forEach(function(e){
+                  btn.parentNode.querySelectorAll('.react-btn').forEach(function(b){
+                      if(b.textContent.trimStart().startsWith(e)){
+                          const c = counts[e];
+                          b.innerHTML = e + (c > 0 ? ' <small>' + c + '</small>' : '');
+                      }
+                  });
+              });
+          });
+      }
+
+      (function () {
+          const groupId = {{ group.id }};
+          const me = {{ user.username | tojson }};
+          const members = {{ group.members | map(attribute='username') | list | tojson }};
+          const box = document.getElementById('chat-box');
+          const emptyNote = document.getElementById('chat-empty');
+          const searchInput = document.getElementById('chat-search');
+          const autocomplete = document.getElementById('autocomplete');
+          const msgInput = document.getElementById('msg-input');
+          let lastId = 0;
+          let allMessages = [];
+
+          function escapeHtml(s) {
+              return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          }
+
+          function renderMentions(s) {
+              return escapeHtml(s).replace(/@(\w+)/g, function(m, u){
+                  return '<span class="mention">@' + escapeHtml(u) + '</span>';
+              });
+          }
+
+          function buildMessageHtml(m) {
+              const isMe = m.author === me;
+              const reactionHtml = ['👍','❤️','😂'].map(function(e) {
+                  const count = (m.reactions && m.reactions[e]) ? m.reactions[e] : 0;
+                  return '<button onclick="react(' + m.id + ',\'' + e + '\',this)" class="react-btn">' +
+                         e + (count > 0 ? ' <small>' + count + '</small>' : '') + '</button>';
+              }).join('');
+              const bodyHtml = m.is_deleted
+                  ? '<em style="color:var(--cream-dim); font-size:.82rem;">Message deleted</em>'
+                  : renderMentions(m.body);
+              const actionsHtml = (isMe && !m.is_deleted) ?
+                  '<div class="chat-message__actions">' +
+                    '<button class="msg-action-btn" onclick="startEdit(' + m.id + ', this)" title="Edit">✏️</button>' +
+                    '<button class="msg-action-btn msg-action-btn--delete" onclick="deleteMsg(' + m.id + ')" title="Delete">🗑</button>' +
+                  '</div>' : '';
+              return '<div class="chat-message__header">' +
+                       '<span class="chat-message__author' + (isMe ? ' chat-message__author--me' : '') + '">' + escapeHtml(m.author) + '</span>' +
+                       '<span class="chat-message__time">' + escapeHtml(m.timestamp) + (m.edited_at ? ' <span style="font-size:.7rem; color:var(--cream-dim);">(edited)</span>' : '') + '</span>' +
+                     '</div>' +
+                     actionsHtml +
+                     '<div class="chat-message__body">' + bodyHtml + '</div>' +
+                     '<div class="chat-message__reactions">' + reactionHtml + '</div>';
+          }
+
+          function appendMessages(msgs) {
+              msgs.forEach(function(m) {
+                  emptyNote.style.display = 'none';
+                  allMessages.push(m);
+                  const div = document.createElement('div');
+                  div.className = 'chat-message';
+                  div.dataset.msgId = m.id;
+                  div.innerHTML = buildMessageHtml(m);
+                  box.appendChild(div);
+                  lastId = m.id;
+              });
+              box.scrollTop = box.scrollHeight;
+          }
+
+          function poll() {
+              const q = searchInput.value.trim();
+              const url = '/group/' + groupId + '/messages?since=' + lastId + (q ? '&q=' + encodeURIComponent(q) : '');
+              fetch(url)
+                  .then(function(r){ return r.json(); })
+                  .then(appendMessages)
+                  .catch(function(){});
+          }
+
+          // Message search: filter visible messages
+          searchInput.addEventListener('input', function(){
+              const q = searchInput.value.trim().toLowerCase();
+              box.querySelectorAll('.chat-message').forEach(function(el){
+                  if(!q){ el.style.display = ''; return; }
+                  const bodyEl = el.querySelector('.chat-message__body');
+                  const text = bodyEl ? bodyEl.textContent.toLowerCase() : '';
+                  el.style.display = text.includes(q) ? '' : 'none';
+              });
+          });
+
+          // Edit message
+          window.startEdit = function(msgId, btn) {
+              const div = btn.closest('.chat-message');
+              const bodyEl = div.querySelector('.chat-message__body');
+              const currentText = allMessages.find(function(m){ return m.id === msgId; });
+              const text = currentText ? currentText.body : bodyEl.textContent.trim();
+              div.classList.add('chat-message--editing');
+              const form = document.createElement('div');
+              form.className = 'chat-message__edit-form';
+              form.innerHTML = '<input class="form-input" type="text" value="' + escapeHtml(text) + '" style="font-size:.85rem;">' +
+                               '<button class="btn btn--primary btn--sm" type="button">Save</button>' +
+                               '<button class="btn btn--ghost btn--sm" type="button">Cancel</button>';
+              bodyEl.parentNode.insertBefore(form, bodyEl.nextSibling);
+              const input = form.querySelector('input');
+              input.focus();
+              form.querySelectorAll('button')[0].addEventListener('click', function(){
+                  const newBody = input.value.trim();
+                  if(!newBody) return;
+                  fetch('/group/' + groupId + '/messages/' + msgId + '/edit', {
+                      method: 'POST',
+                      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                      body: 'body=' + encodeURIComponent(newBody)
+                  }).then(function(r){ return r.json(); }).then(function(data){
+                      if(data.ok){
+                          bodyEl.innerHTML = renderMentions(newBody);
+                          const m = allMessages.find(function(x){ return x.id === msgId; });
+                          if(m){ m.body = newBody; m.edited_at = data.edited_at; }
+                          const timeEl = div.querySelector('.chat-message__time');
+                          if(timeEl && !timeEl.querySelector('span')){ timeEl.innerHTML += ' <span style="font-size:.7rem; color:var(--cream-dim);">(edited)</span>'; }
+                      }
+                      div.classList.remove('chat-message--editing');
+                      form.remove();
+                  });
+              });
+              form.querySelectorAll('button')[1].addEventListener('click', function(){
+                  div.classList.remove('chat-message--editing');
+                  form.remove();
+              });
+          };
+
+          // Delete message
+          window.deleteMsg = function(msgId) {
+              if(!confirm('Delete this message?')) return;
+              fetch('/group/' + groupId + '/messages/' + msgId + '/delete', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+              }).then(function(r){ return r.json(); }).then(function(data){
+                  if(data.ok){
+                      const div = box.querySelector('[data-msg-id="' + msgId + '"]');
+                      if(div){
+                          const bodyEl = div.querySelector('.chat-message__body');
+                          if(bodyEl) bodyEl.innerHTML = '<em style="color:var(--cream-dim); font-size:.82rem;">Message deleted</em>';
+                          const actions = div.querySelector('.chat-message__actions');
+                          if(actions) actions.remove();
+                      }
+                  }
+              });
+          };
+
+          // @mention autocomplete
+          msgInput.addEventListener('input', function(){
+              const val = msgInput.value;
+              const atIdx = val.lastIndexOf('@');
+              if(atIdx === -1){ autocomplete.style.display = 'none'; return; }
+              const fragment = val.slice(atIdx + 1).toLowerCase();
+              const matches = members.filter(function(m){ return m !== me && m.toLowerCase().startsWith(fragment); });
+              if(!matches.length){ autocomplete.style.display = 'none'; return; }
+              autocomplete.innerHTML = matches.slice(0,5).map(function(m){
+                  return '<div class="autocomplete-item" onclick="insertMention(\'' + escapeHtml(m) + '\')">' + escapeHtml(m) + '</div>';
+              }).join('');
+              autocomplete.style.display = 'block';
+          });
+          msgInput.addEventListener('blur', function(){ setTimeout(function(){ autocomplete.style.display = 'none'; }, 150); });
+
+          window.insertMention = function(username){
+              const val = msgInput.value;
+              const atIdx = val.lastIndexOf('@');
+              msgInput.value = val.slice(0, atIdx) + '@' + username + ' ';
+              autocomplete.style.display = 'none';
+              msgInput.focus();
+          };
+
+          poll();
+          setInterval(poll, 2000);
+
+          document.getElementById('msg-form').addEventListener('submit', function(e) {
+              e.preventDefault();
+              const input = document.getElementById('msg-input');
+              const body = input.value.trim();
+              if (!body) return;
+              input.value = '';
+              autocomplete.style.display = 'none';
+              fetch('/group/' + groupId, {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                  body: 'action=post_message&body=' + encodeURIComponent(body)
+              }).then(poll);
+          });
+      })();
+      </script>
+
     </div>
+
+    <!-- RIGHT: Members -->
+    <div>
+      <div class="card card--static" style="position: sticky; top: 80px;">
+        <h4 style="margin-bottom: 1rem;">
+          Members
+          <span style="color: var(--cream-dim); font-weight: 400; text-transform: none; letter-spacing: 0; font-size: .9rem;">
+            ({{ group.members|length }}{% if group.max_members %}/{{ group.max_members }}{% endif %})
+          </span>
+        </h4>
+
+        {% for member in group.members %}
+        <div class="member-item">
+          <div class="member-item__info">
+            <div class="match-avatar" style="width:30px; height:30px; font-size:.8rem;">{{ member.username[0].upper() }}</div>
+            <div>
+              <div style="font-size:.875rem; font-weight:500;">
+                <a href="/user/{{ member.username }}" style="color: var(--cream);">{{ member.username }}</a>
+              </div>
+              {% if member.id == group.creator_id %}
+              <span class="badge badge--creator" style="margin-top:.15rem;">Owner</span>
+              {% endif %}
+            </div>
+          </div>
+          <div style="display:flex; gap:.3rem; align-items:center;">
+            {% if member.id != user.id %}
+            <a class="btn btn--ghost btn--sm" href="/messages/{{ member.username }}" title="Send DM" style="padding:.2rem .5rem; font-size:.75rem;">✉</a>
+            {% endif %}
+            {% if user.id == group.creator_id and member.id != user.id %}
+            <div class="member-item__actions">
+              <form method="POST" action="/kick_member/{{ group.id }}/{{ member.id }}"
+                    onsubmit="return confirm('Remove {{ member.username }}?')">
+                <button class="btn btn--danger btn--sm" type="submit">Remove</button>
+              </form>
+              <form method="POST" action="/transfer_ownership/{{ group.id }}/{{ member.id }}"
+                    onsubmit="return confirm('Transfer ownership to {{ member.username }}?')">
+                <button class="btn btn--ghost btn--sm" type="submit">Owner</button>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
 </div>
 {% endblock %}

@@ -1,33 +1,64 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="column column-50 column-offset-25">
-        <h2>Edit Profile</h2>
-        <p>Username: <strong>{{ user.username }}</strong></p>
+<div class="page-wrapper page-wrapper--narrow" style="padding-top: 2.5rem;">
 
-        <form method="POST">
-            <fieldset>
-                <label for="major">Major</label>
-                <input type="text" id="major" name="major" value="{{ user.major }}" required>
+  <div class="page-header">
+    <div class="page-header__eyebrow">Account</div>
+    <h2>Edit Profile</h2>
+    <p class="text-dim mt-1">Signed in as <strong style="color: var(--cream-muted);">{{ user.username }}</strong></p>
+  </div>
 
-                <label for="course">Target Course</label>
-                <input type="text" id="course" name="course" value="{{ user.course }}" required>
+  <div class="card card--static">
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label" for="bio">Bio <span class="form-hint" style="display:inline;">(optional)</span></label>
+        <textarea class="form-input" id="bio" name="bio" rows="3"
+                  placeholder="Tell classmates a bit about yourself…">{{ user.bio or '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="major">Major</label>
+        <input class="form-input" type="text" id="major" name="major" value="{{ user.major }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="course">Primary Course</label>
+        <input class="form-input" type="text" id="course" name="course" value="{{ user.course }}" required>
+        <div class="form-hint">Used to match you with classmates and groups.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="extra_courses">Additional Courses
+          <span class="form-hint" style="display:inline;">(optional, comma-separated)</span>
+        </label>
+        <input class="form-input" type="text" id="extra_courses" name="extra_courses"
+               value="{{ extra_courses_str }}"
+               placeholder="e.g. CS 301, MATH 202">
+        <div class="form-hint">Other courses you're taking this semester.</div>
+        {% if user.extra_courses %}
+        <div class="course-tabs" style="margin-top:.5rem;">
+          {% for ec in user.extra_courses %}
+          <span class="course-tab course-tab--active">{{ ec.course }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="available_time">Availability</label>
+        <select class="form-select" id="available_time" name="available_time">
+          {% for opt in ['Mornings', 'Afternoons', 'Evenings', 'Weekends'] %}
+          <option value="{{ opt }}" {% if user.available_time == opt %}selected{% endif %}>{{ opt }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="new_password">New Password</label>
+        <input class="form-input" type="password" id="new_password" name="new_password" placeholder="Leave blank to keep current">
+      </div>
+      <div style="display:flex; gap:.75rem; margin-top:1.5rem;">
+        <button class="btn btn--primary" type="submit">Save Changes</button>
+        <a class="btn btn--ghost" href="/dashboard">Cancel</a>
+      </div>
+    </form>
+  </div>
 
-                <label for="available_time">Availability</label>
-                <select id="available_time" name="available_time">
-                    {% for opt in ['Mornings', 'Afternoons', 'Evenings', 'Weekends'] %}
-                    <option value="{{ opt }}" {% if user.available_time == opt %}selected{% endif %}>{{ opt }}</option>
-                    {% endfor %}
-                </select>
-
-                <label for="new_password">New Password <small>(leave blank to keep current)</small></label>
-                <input type="password" id="new_password" name="new_password" placeholder="New password">
-
-                <input class="button-primary" type="submit" value="Save Changes">
-                <a class="button button-clear" href="/dashboard">Cancel</a>
-            </fieldset>
-        </form>
-    </div>
 </div>
 {% endblock %}

@@ -1,4 +1,4 @@
-# StudyMatch
+# MatchClass
 
 A Flask web app where students can find study partners, create study groups, schedule meetings, and chat — all organised around shared courses.
 
@@ -6,22 +6,51 @@ A Flask web app where students can find study partners, create study groups, sch
 
 ## Features
 
+### Core
 | Feature | Details |
 |---|---|
-| Authentication | Register, login, logout with hashed passwords. Sessions expire after 2 hours. |
-| Profile editing | Update your major, course, availability, or password at any time. |
-| Student matching | Dashboard shows all students enrolled in the same course as you. |
-| User profiles | Every username is a clickable link to a public profile page showing major, course, availability, and shared groups. |
-| Study groups | Create public (open join) or private (request-only) groups per course. Optional description and member limit. |
-| Edit group | Group creator can update name, description, contact info, member limit, and public/private toggle at any time. |
-| Transfer ownership | Group creator can hand ownership to any current member. |
-| Group search | Search groups across any course, not just your own. |
-| Member limit | Set a max member cap on a group. Full badge shown and join button disabled when capacity is reached. |
-| Meetings | Schedule meetings with a date/time picker and optional location or video link; RSVP yes or no; delete when done. |
-| Real-time chat | Per-group message board that updates every 2 seconds without page reloads. |
-| Message reactions | React to any chat message with 👍 ❤️ 😂 — counts update instantly without a page reload. |
-| Group management | Creator can remove members, approve/deny join requests, or delete the group. |
-| Notifications | Bell badge in the nav bar alerts you when a join request is approved/denied or a new meeting is scheduled in your group. |
+| Authentication | Register, login, logout with hashed passwords (min 6 chars). Sessions expire after 2 hours. |
+| Profile editing | Update major, primary course, availability, bio, and additional courses. Password change requires re-entry. |
+| Student matching | Dashboard shows all students enrolled in the same course, filterable by availability. |
+| User profiles | Public profile page showing major, courses, availability, bio, shared groups, and reviews given. |
+| Direct Messages | Private one-to-one messaging between any two users with real-time polling and unread badge. |
+
+### Groups
+| Feature | Details |
+|---|---|
+| Create group | Public (open join) or private (request-only) groups per course. Optional description, member limit, and tags. |
+| Group tags | Tag groups with topic labels (e.g. `exam-prep`, `project`) for discovery. |
+| Group search | Search groups across any course; filter by tag and availability. |
+| Edit group | Creator can update name, description, contact info, member limit, visibility, and tags at any time. |
+| Pinned announcement | Creator can pin a group-wide announcement shown at the top of the group page. |
+| Transfer ownership | Creator can hand ownership to any current member. |
+| Member management | Creator can approve/deny join requests and remove members. |
+
+### Meetings
+| Feature | Details |
+|---|---|
+| Schedule meetings | Date/time picker, optional location or video link, topic label. |
+| Recurring meetings | Set weekly or biweekly recurrence with an optional end date — follow-up instances created automatically. |
+| RSVP | Three-way RSVP: Yes / Maybe / No. Counts shown per status. |
+| Export to calendar | Download a `.ics` file for any meeting to add it to Google Calendar, Apple Calendar, or Outlook. |
+| Meeting reminders | In-app notification fired automatically when a meeting is under 24 hours away. |
+
+### Chat & Communication
+| Feature | Details |
+|---|---|
+| Real-time group chat | Per-group message board that updates every 2 seconds without page reloads. |
+| Message reactions | React to any chat message with 👍 ❤️ 😂 — counts update instantly. |
+| Message edit/delete | Edit or soft-delete your own messages inline; deleted messages show a placeholder. |
+| @mentions | Type `@username` in chat to mention a group member — they receive a notification and mentions are highlighted in yellow. |
+| Message search | Search the chat history by keyword directly from the chat panel. |
+| Direct Messages | Poll-based DM threads with unread count badge in the nav bar. |
+
+### Reviews & Discovery
+| Feature | Details |
+|---|---|
+| Group reviews | Non-creator members can leave a 1–5 star rating and optional comment on a group. Aggregate score shown in header. |
+| Activity indicator | Group cards show last-active date with a green dot for recently active groups. |
+| Notifications | Bell badge in the nav bar for join request outcomes, new meetings, @mentions, and DMs. |
 
 ---
 
@@ -29,22 +58,27 @@ A Flask web app where students can find study partners, create study groups, sch
 
 ```
 MatchClass/
-├── app.py                  # All routes, models, and app config
+├── app.py                  # All routes, models, helpers, and app config (~1080 lines)
 ├── requirements.txt        # Python dependencies
 ├── .env.example            # Environment variable template
 ├── .gitignore
+├── static/
+│   └── css/
+│       └── style.css       # Campus Ink design system (~1600 lines, no framework)
 └── templates/
-    ├── layout.html         # Base template with nav bar, flash messages, notification badge
+    ├── layout.html         # Base template — nav, flash messages, notification badges
     ├── login.html
     ├── register.html
-    ├── dashboard.html      # Student matches + groups for your course
-    ├── profile.html        # Edit your own profile settings
-    ├── user_profile.html   # Public profile page for any user
-    ├── search.html         # Search groups by course
-    ├── create_group.html
+    ├── dashboard.html      # Student matches + groups, availability filter, last-active
+    ├── profile.html        # Edit profile — bio, courses, availability
+    ├── user_profile.html   # Public profile — bio, courses, reviews, DM button
+    ├── search.html         # Search groups by course, tag, availability
+    ├── create_group.html   # Create group with tags
     ├── edit_group.html     # Edit group details (creator only)
     ├── notifications.html  # Notification inbox
-    └── group_detail.html   # Meetings, RSVP, live chat, reactions, member list
+    ├── group_detail.html   # Meetings, RSVP, recurring, .ics, chat, @mention, edit/delete, reviews
+    ├── messages.html       # DM inbox
+    └── dm_thread.html      # DM conversation thread
 ```
 
 ---
@@ -94,48 +128,57 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 ```bash
 flask run
+# or
+python app.py
 ```
 
 Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
+
+The SQLite database is created automatically at `instance/studyapp.db` on first run — no setup required.
 
 ---
 
 ## Database
 
-The app uses **SQLite** via SQLAlchemy. The database file is created automatically at `instance/studyapp.db` on first run — no setup required.
+### Schema migration
 
-If you change the schema (add/remove model columns), you can either delete `instance/studyapp.db` and restart (wipes all data), or use `sqlite3` to run `ALTER TABLE` statements to add columns without data loss.
+If you pull changes that add new model columns to an existing database, the simplest approach is to delete `instance/studyapp.db` and restart (wipes all data). For production, use Flask-Migrate or run `ALTER TABLE` statements manually.
 
-### Models at a glance
+### Models
 
 | Model | Purpose |
 |---|---|
-| `User` | Student account (username, hashed password, major, course, availability) |
-| `StudyGroup` | A group tied to a course; public or private; optional description and member limit |
-| `Meeting` | A scheduled session within a group; optional location or link |
-| `RSVP` | A user's yes/no response to a meeting |
-| `Message` | A chat message posted in a group |
+| `User` | Student account — username, hashed password, major, primary course, availability, bio |
+| `UserCourse` | Additional courses a student is enrolled in |
+| `StudyGroup` | A group tied to a course — public/private, description, member limit, pinned announcement, last-active timestamp |
+| `GroupTag` | Reusable topic tag attached to groups |
+| `Meeting` | A scheduled session — title, date/time, location, recurrence settings |
+| `RSVP` | A user's yes/maybe/no response to a meeting |
+| `Message` | A chat message — supports soft-delete and edit timestamp |
 | `Reaction` | An emoji reaction (👍 ❤️ 😂) on a chat message |
 | `JoinRequest` | A pending/approved/denied request to join a private group |
-| `Notification` | An unread alert for a user (join request outcome, new meeting) |
+| `Notification` | An unread in-app alert |
+| `DirectMessage` | A private message between two users |
+| `GroupReview` | A star rating + comment left on a group by a member |
 
 ---
 
 ## Tech Stack
 
-- **Backend:** Python 3, Flask 3, Flask-SQLAlchemy
-- **Database:** SQLite (easily swappable for PostgreSQL via `DATABASE_URL`)
-- **Templates:** Jinja2
-- **CSS:** [Milligram](https://milligram.io/) (CDN, no build step)
-- **Real-time chat:** Vanilla JS polling (`fetch` every 2 s against a JSON endpoint)
-- **Reactions:** Vanilla JS `fetch` POST with live count updates
+- **Backend:** Python 3.11+, Flask 3, Flask-SQLAlchemy
+- **Database:** SQLite (swappable for PostgreSQL via `DATABASE_URL`)
+- **Templates:** Jinja2 with autoescape enabled
+- **CSS:** Custom "Campus Ink" design system — dark editorial theme, no framework, no build step
+- **Fonts:** Playfair Display (display) + DM Sans (body) via Google Fonts
+- **Real-time:** Vanilla JS polling (`fetch` every 2 s) for group chat and DM threads
+- **Calendar export:** `icalendar` library for `.ics` file generation
 
 ---
 
 ## Known Limitations
 
-- **No production WSGI server** — `flask run` uses the development server. For deployment use Gunicorn: `gunicorn app:app`
+- **No CSRF protection** — forms are not protected against cross-site request forgery. Add [Flask-WTF](https://flask-wtf.readthedocs.io/) before deploying publicly.
 - **SQLite** is fine for local use but not suitable for concurrent production traffic. Switch to PostgreSQL by changing `DATABASE_URL`.
-- **No CSRF protection** — forms are not protected against cross-site request forgery. Add [Flask-WTF](https://flask-wtw.readthedocs.io/) before exposing this publicly.
-- **Real-time chat via polling** — works well for small groups; for high traffic a WebSocket solution (e.g. Flask-SocketIO) would be more efficient.
-- **No email notifications** — in-app notifications only; no email delivery on join request or meeting events.
+- **No production WSGI server** — for deployment use Gunicorn: `gunicorn app:app`
+- **Real-time via polling** — works well for small groups; for high traffic consider Flask-SocketIO.
+- **No email notifications** — in-app only; no email delivery.

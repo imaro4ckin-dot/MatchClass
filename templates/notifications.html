@@ -1,23 +1,33 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<h2>Notifications</h2>
+<div class="page-wrapper" style="max-width: 680px; padding-top: 2.5rem;">
 
-{% if notifs %}
-    <ul style="list-style:none;padding:0;">
+  <div class="page-header">
+    <div class="page-header__eyebrow">Inbox</div>
+    <h1>Notifications</h1>
+  </div>
+
+  {% if notifs %}
     {% for n in notifs %}
-        <li style="padding:.8rem 1rem;margin-bottom:.5rem;border-radius:4px;
-                   background:{% if not n.is_read %}#f3e5f5{% else %}#fafafa{% endif %};
-                   border-left:4px solid {% if not n.is_read %}#9b4dca{% else %}#ddd{% endif %};">
-            {% if n.link %}
-                <a href="{{ n.link }}" style="color:inherit;text-decoration:none;">{{ n.message }}</a>
-            {% else %}
-                {{ n.message }}
-            {% endif %}
-        </li>
+    {% if n.link %}
+    <a class="notif-item notif-item--{% if not n.is_read %}unread{% else %}read{% endif %}" href="{{ n.link }}">
+      <div class="notif-dot"></div>
+      <div class="notif-text">{{ n.message }}</div>
+    </a>
+    {% else %}
+    <div class="notif-item notif-item--{% if not n.is_read %}unread{% else %}read{% endif %}">
+      <div class="notif-dot"></div>
+      <div class="notif-text">{{ n.message }}</div>
+    </div>
+    {% endif %}
     {% endfor %}
-    </ul>
-{% else %}
-    <p style="color:#aaa;">No notifications yet.</p>
-{% endif %}
+  {% else %}
+    <div class="empty-state">
+      You're all caught up.<br>
+      No notifications yet.
+    </div>
+  {% endif %}
+
+</div>
 {% endblock %}

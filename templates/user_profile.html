@@ -1,39 +1,91 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div style="display:flex;justify-content:space-between;align-items:center;">
-    <h2>{{ profile_user.username }}</h2>
-    <a class="button button-outline" href="/dashboard">Back to Dashboard</a>
+<div class="page-wrapper" style="padding-top: 2.5rem; max-width: 720px;">
+
+  <div class="page-header">
+    <div class="page-header__row">
+      <div>
+        <div class="page-header__eyebrow">Student Profile</div>
+        <h1>{{ profile_user.username }}</h1>
+        {% if profile_user.bio %}
+        <p class="text-muted mt-2" style="max-width: 480px;">{{ profile_user.bio }}</p>
+        {% endif %}
+      </div>
+      <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+        <a class="btn btn--ghost btn--sm" href="/messages/{{ profile_user.username }}">Send DM</a>
+        <a class="btn btn--secondary btn--sm" href="/dashboard">← Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card--static mb-3">
+    <table class="profile-table">
+      <tr>
+        <td>Major</td>
+        <td>{{ profile_user.major }}</td>
+      </tr>
+      <tr>
+        <td>Primary Course</td>
+        <td>{{ profile_user.course }}</td>
+      </tr>
+      {% if profile_user.extra_courses %}
+      <tr>
+        <td>Also Taking</td>
+        <td>
+          <div class="course-tabs">
+            {% for ec in profile_user.extra_courses %}
+            <span class="course-tab">{{ ec.course }}</span>
+            {% endfor %}
+          </div>
+        </td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td>Availability</td>
+        <td>{{ profile_user.available_time }}</td>
+      </tr>
+      <tr>
+        <td>Groups</td>
+        <td>{{ profile_user.groups | length }}</td>
+      </tr>
+    </table>
+  </div>
+
+  {% if shared_groups %}
+  <div class="section-title">Shared Groups</div>
+  {% for group in shared_groups %}
+  <div class="group-card">
+    <div class="group-card__top">
+      <div class="group-card__name">
+        <a href="/group/{{ group.id }}" style="color: inherit;">{{ group.name }}</a>
+      </div>
+      <small class="text-dim">{{ group.course }}</small>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <!-- Reviews received -->
+  {% if reviews %}
+  <div class="section-title" style="margin-top: 2rem;">Group Reviews by {{ profile_user.username }}</div>
+  {% for r in reviews %}
+  <div class="review-item">
+    <div class="review-stars">
+      {% for i in range(1, 6) %}
+      <span style="font-size:.95rem; color: {% if i <= r.rating %}var(--amber){% else %}var(--ink-mid){% endif %};">★</span>
+      {% endfor %}
+      <span style="font-size:.8rem; color: var(--cream-dim); margin-left:.4rem;">in
+        <a href="/group/{{ r.group.id }}" style="color: var(--cream-dim);">{{ r.group.name }}</a>
+      </span>
+    </div>
+    {% if r.comment %}
+    <p style="font-size:.875rem; color: var(--cream-muted); margin: .3rem 0 0;">{{ r.comment }}</p>
+    {% endif %}
+    <div style="font-size:.75rem; color: var(--cream-dim); margin-top:.35rem;">{{ r.timestamp }}</div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
 </div>
-
-<table style="width:auto;">
-    <tr>
-        <td style="padding-right:2rem;color:#777;">Major</td>
-        <td><strong>{{ profile_user.major }}</strong></td>
-    </tr>
-    <tr>
-        <td style="padding-right:2rem;color:#777;">Course</td>
-        <td><strong>{{ profile_user.course }}</strong></td>
-    </tr>
-    <tr>
-        <td style="padding-right:2rem;color:#777;">Availability</td>
-        <td><strong>{{ profile_user.available_time }}</strong></td>
-    </tr>
-    <tr>
-        <td style="padding-right:2rem;color:#777;">Groups</td>
-        <td><strong>{{ profile_user.groups | length }}</strong></td>
-    </tr>
-</table>
-
-{% if shared_groups %}
-<h4 style="margin-top:2rem;">Groups you share</h4>
-<ul style="list-style:none;padding:0;">
-{% for group in shared_groups %}
-    <li style="margin-bottom:.5rem;">
-        <a href="/group/{{ group.id }}">{{ group.name }}</a>
-        <small style="color:#777;">({{ group.course }})</small>
-    </li>
-{% endfor %}
-</ul>
-{% endif %}
 {% endblock %}

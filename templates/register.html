@@ -1,36 +1,93 @@
-{% extends "layout.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — MatchClass</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
 
-{% block content %}
-<div class="row">
-    <div class="column column-50 column-offset-25">
-        <h2 style="text-align: center;">Create an Account</h2>
-
-        <form method="POST">
-            <fieldset>
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
-
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-
-                <label for="major">Major</label>
-                <input type="text" id="major" name="major" required>
-
-                <label for="course">Target Course (e.g., CS101)</label>
-                <input type="text" id="course" name="course" required>
-
-                <label for="available_time">Availability</label>
-                <select id="available_time" name="available_time">
-                    <option value="Mornings">Mornings</option>
-                    <option value="Afternoons">Afternoons</option>
-                    <option value="Evenings">Evenings</option>
-                    <option value="Weekends">Weekends</option>
-                </select>
-
-                <input class="button-primary" type="submit" value="Sign Up">
-            </fieldset>
-        </form>
-        <p style="text-align: center;">Already have an account? <a href="/login">Login here</a>.</p>
-    </div>
+<div class="flash-stack">
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% for category, message in messages %}
+    <div class="flash flash--{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
 </div>
-{% endblock %}
+
+<div class="auth-page">
+  <div class="auth-page__hero">
+    <div class="auth-hero__number">MC</div>
+    <div class="auth-hero__logo">
+      MatchClass<span class="nav__brand-dot"></span>
+    </div>
+    <div class="auth-hero__tagline">
+      Your course.<br>Your <em>people.</em>
+    </div>
+    <p class="auth-hero__desc">
+      Set up your profile once and we'll match you with classmates studying the same courses at compatible times.
+    </p>
+    <div class="auth-hero__stats">
+      <div>
+        <div class="auth-hero__stat-number">1</div>
+        <div class="auth-hero__stat-label">Course Focus</div>
+      </div>
+      <div>
+        <div class="auth-hero__stat-number">Fast</div>
+        <div class="auth-hero__stat-label">Matching</div>
+      </div>
+      <div>
+        <div class="auth-hero__stat-number">Real</div>
+        <div class="auth-hero__stat-label">Chat</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-page__form">
+    <div class="auth-form-box">
+      <div class="auth-form-box__eyebrow">Get started</div>
+      <h1 class="auth-form-box__title">Create account</h1>
+      <p class="auth-form-box__sub">Takes less than a minute.</p>
+
+      <form method="POST">
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input class="form-input" type="text" id="username" name="username" placeholder="choose a username" required autofocus>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input class="form-input" type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="major">Major</label>
+          <input class="form-input" type="text" id="major" name="major" placeholder="e.g. Computer Science" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="course">Target Course</label>
+          <input class="form-input" type="text" id="course" name="course" placeholder="e.g. CS101, Calculus II" required>
+          <div class="form-hint">This is the course you want to find study partners for.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="available_time">Availability</label>
+          <select class="form-select" id="available_time" name="available_time">
+            <option value="Mornings">Mornings</option>
+            <option value="Afternoons">Afternoons</option>
+            <option value="Evenings">Evenings</option>
+            <option value="Weekends">Weekends</option>
+          </select>
+        </div>
+        <button class="btn btn--primary btn--full btn--lg" type="submit">Create Account</button>
+      </form>
+
+      <p class="auth-form-box__footer">
+        Already have an account? <a href="/login">Sign in</a>.
+      </p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

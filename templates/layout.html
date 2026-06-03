@@ -1,83 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudyMatch</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css">
-    <style>
-        body { margin-top: 0; }
-        nav {
-            background: #9b4dca;
-            padding: 1rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 2rem;
-        }
-        nav a { color: #fff; text-decoration: none; margin-left: 1.5rem; font-size: 1.3rem; }
-        nav a:hover { text-decoration: underline; }
-        nav .brand { font-weight: 700; font-size: 1.6rem; margin-left: 0; }
-        .container { max-width: 900px; }
-        .flash-success {
-            background: #e8f5e9;
-            border-left: 4px solid #4caf50;
-            padding: .8rem 1.2rem;
-            margin-bottom: 1.5rem;
-            border-radius: 2px;
-        }
-        .flash-error {
-            background: #fdecea;
-            border-left: 4px solid #e53935;
-            padding: .8rem 1.2rem;
-            margin-bottom: 1.5rem;
-            border-radius: 2px;
-        }
-        .badge {
-            display: inline-block;
-            padding: .2rem .6rem;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-        .badge-public  { background: #e8f5e9; color: #2e7d32; }
-        .badge-private { background: #fff3e0; color: #e65100; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MatchClass</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-{% if session.user_id %}
-<nav>
-    <a class="brand" href="/dashboard">StudyMatch</a>
-    <div>
-        <a href="/dashboard">Dashboard</a>
-        <a href="/search">Search Groups</a>
-        <a href="/notifications" style="position:relative;">
-            Notifications
-            {% set unread = namespace(count=0) %}
-            {% if session.user_id %}
-                {# count unread via a query injected in context — fallback to 0 if not available #}
-                {% if unread_count is defined and unread_count > 0 %}
-                    <span style="background:#e53935;color:#fff;border-radius:50%;padding:1px 6px;
-                                 font-size:.9rem;position:absolute;top:-6px;right:-10px;">{{ unread_count }}</span>
-                {% endif %}
-            {% endif %}
-        </a>
-        <a href="/user/{{ session.username }}">{{ session.username }}</a>
-        <a href="/profile">Settings</a>
-        <a href="/logout">Logout</a>
-    </div>
-</nav>
-{% endif %}
-<div class="container" style="padding: 0 2rem 4rem;">
-    {% with messages = get_flashed_messages(with_categories=True) %}
-      {% for category, message in messages %}
-        <div class="flash-{{ category }}">{{ message }}</div>
-      {% endfor %}
-    {% endwith %}
 
-    {% block content %}{% endblock %}
+{% if session.user_id %}
+<header class="nav">
+  <div class="nav__inner">
+    <a class="nav__brand" href="/dashboard">
+      MatchClass<span class="nav__brand-dot"></span>
+    </a>
+    <nav class="nav__links">
+      <a class="nav__link" href="/dashboard">Dashboard</a>
+      <a class="nav__link" href="/search">Search Groups</a>
+      <a class="nav__link" href="/messages">Messages{% if unread_dm_count is defined and unread_dm_count > 0 %}<span class="nav__link-badge">{{ unread_dm_count }}</span>{% endif %}</a>
+      <span class="nav__notif">
+        <a class="nav__link" href="/notifications">Notifications
+          {% if unread_count is defined and unread_count > 0 %}
+          <span class="nav__badge">{{ unread_count }}</span>
+          {% endif %}
+        </a>
+      </span>
+      <a class="nav__link" href="/user/{{ session.username }}">{{ session.username }}</a>
+      <a class="nav__link" href="/profile">Settings</a>
+      <a class="nav__link nav__cta" href="/logout">Logout</a>
+    </nav>
+  </div>
+</header>
+{% endif %}
+
+<div class="flash-stack">
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% for category, message in messages %}
+    <div class="flash flash--{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
 </div>
+
+{% block content %}{% endblock %}
+
 </body>
 </html>

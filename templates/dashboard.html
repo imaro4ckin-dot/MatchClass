@@ -1,70 +1,140 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center;">
-    <h2>Welcome, {{ user.username }}!</h2>
-    <a class="button" href="/create_group">+ Create a Group</a>
-</div>
-<p>Your course: <strong>{{ user.course }}</strong> &nbsp;|&nbsp; Major: {{ user.major }} &nbsp;|&nbsp; Available: {{ user.available_time }}</p>
-<hr>
+<div class="page-wrapper">
 
-<div class="row">
-    <!-- STUDENT MATCHES -->
-    <div class="column">
-        <h3>Student Matches</h3>
-        {% if matches %}
-            <ul>
-            {% for match in matches %}
-                <li>
-                    <strong><a href="/user/{{ match.username }}">{{ match.username }}</a></strong>
-                    <small>({{ match.major }} &mdash; Available: {{ match.available_time }})</small>
-                </li>
-            {% endfor %}
-            </ul>
-        {% else %}
-            <p>No other students found for <strong>{{ user.course }}</strong> yet.</p>
+  <div class="page-header">
+    <div class="page-header__eyebrow">Dashboard</div>
+    <div class="page-header__row">
+      <div>
+        <h1>Welcome, {{ user.username }}</h1>
+        <div class="page-header__meta">
+          <span class="page-header__meta-item">
+            <strong>{{ user.course }}</strong>
+          </span>
+          <span class="page-header__meta-item">· {{ user.major }}</span>
+          <span class="page-header__meta-item">· {{ user.available_time }}</span>
+        </div>
+        {% if user.extra_courses %}
+        <div class="course-tabs mt-2">
+          {% for ec in user.extra_courses %}
+          <span class="course-tab">{{ ec.course }}</span>
+          {% endfor %}
+        </div>
         {% endif %}
+      </div>
+      <a class="btn btn--primary" href="/create_group">+ New Group</a>
+    </div>
+  </div>
+
+  <!-- Availability filter bar -->
+  <div class="filter-bar">
+    <span class="filter-bar__label">Filter by time</span>
+    {% set avail_options = ['Mornings','Afternoons','Evenings','Weekends'] %}
+    <a class="filter-chip {% if not avail_filter %}filter-chip--active{% endif %}" href="/dashboard">All</a>
+    {% for opt in avail_options %}
+    <a class="filter-chip {% if avail_filter == opt %}filter-chip--active{% endif %}"
+       href="/dashboard?avail={{ opt }}">{{ opt }}</a>
+    {% endfor %}
+  </div>
+
+  <div class="dash-layout">
+
+    <!-- LEFT: Student Matches -->
+    <div>
+      <div class="section-title">Student Matches</div>
+
+      {% if matches %}
+        {% for match in matches %}
+        <div class="match-item">
+          <div class="match-avatar">{{ match.username[0].upper() }}</div>
+          <div>
+            <div class="match-item__name">
+              <a href="/user/{{ match.username }}" style="color: inherit;">{{ match.username }}</a>
+            </div>
+            <div class="match-item__meta">{{ match.major }} &mdash; {{ match.available_time }}</div>
+          </div>
+          <div style="margin-left:auto;">
+            <a class="btn btn--ghost btn--sm" href="/messages/{{ match.username }}">DM</a>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          No classmates found for <strong style="color: var(--cream-muted);">{{ user.course }}</strong> yet.<br>
+          Share the link with your class!
+        </div>
+      {% endif %}
     </div>
 
-    <!-- STUDY GROUPS -->
-    <div class="column">
-        <h3>Study Groups for {{ user.course }}</h3>
-        {% if all_groups %}
-            <ul style="list-style: none; padding: 0;">
-            {% for group in all_groups %}
-                <li style="margin-bottom: 1.2rem; padding: .8rem; border: 1px solid #eee; border-radius: 4px;">
-                    <strong>{{ group.name }}</strong>
-                    <span class="badge badge-{% if group.is_public %}public{% else %}private{% endif %}" style="margin-left: .5rem;">
-                        {% if group.is_public %}Public{% else %}Private{% endif %}
-                    </span><br>
-                    <small>Members: {{ group.members|length }}{% if group.max_members %}/{{ group.max_members }}{% endif %}</small>
-                    {% if group.max_members and group.members|length >= group.max_members %}
-                    <span class="badge" style="background:#fdecea;color:#e53935;margin-left:.4rem;">Full</span>
-                    {% endif %}
-                    {% if group.description %}
-                    <small style="display:block;color:#777;margin-top:.2rem;">{{ group.description }}</small>
-                    {% endif %}<br>
-                    <div style="margin-top: .5rem;">
-                    {% if user in group.members %}
-                        <a class="button button-outline button-small" href="/group/{{ group.id }}">View Group</a>
-                        {% if user.id != group.creator_id %}
-                        <a class="button button-clear button-small" href="/leave_group/{{ group.id }}"
-                           onclick="return confirm('Leave this group?')">Leave</a>
-                        {% endif %}
-                    {% elif group.max_members and group.members|length >= group.max_members %}
-                        <button class="button button-small" disabled style="opacity:.5;cursor:not-allowed;">Full</button>
-                    {% else %}
-                        <a class="button button-small" href="/join_group/{{ group.id }}">
-                            {% if group.is_public %}Join{% else %}Request to Join{% endif %}
-                        </a>
-                    {% endif %}
-                    </div>
-                </li>
-            {% endfor %}
-            </ul>
-        {% else %}
-            <p>No groups yet. <a href="/create_group">Create one!</a></p>
-        {% endif %}
+    <!-- RIGHT: Study Groups -->
+    <div>
+      <div class="section-title">Groups for {{ user.course }}</div>
+
+      {% if all_groups %}
+        {% for group in all_groups %}
+        <div class="group-card">
+          <div class="group-card__top">
+            <div>
+              <div class="group-card__name">{{ group.name }}</div>
+              {% if group.description %}
+              <div class="group-card__desc">{{ group.description }}</div>
+              {% endif %}
+              {% if group.tags %}
+              <div class="tag-list" style="margin-top:.4rem;">
+                {% for tag in group.tags %}
+                <span class="tag">{{ tag.name }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            <div style="flex-shrink:0; display:flex; gap:.4rem; flex-wrap:wrap; justify-content:flex-end;">
+              <span class="badge badge--{% if group.is_public %}public{% else %}private{% endif %}">
+                {% if group.is_public %}Public{% else %}Private{% endif %}
+              </span>
+              {% if group.max_members and group.members|length >= group.max_members %}
+              <span class="badge badge--full">Full</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="group-card__footer">
+            <div style="display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;">
+              <span class="group-card__members">
+                {{ group.members|length }}{% if group.max_members %}/{{ group.max_members }}{% endif %} members
+              </span>
+              {% if group.last_active %}
+              <span style="font-size:.75rem; color: var(--cream-dim);">
+                <span class="last-active-dot {% if (now - group.last_active).total_seconds() < 86400 %}last-active-dot--recent{% endif %}"></span>
+                active {{ group.last_active.strftime('%b %d') }}
+              </span>
+              {% endif %}
+            </div>
+            <div style="display:flex; gap:.5rem;">
+              {% if user in group.members %}
+                <a class="btn btn--secondary btn--sm" href="/group/{{ group.id }}">View Group</a>
+                {% if user.id != group.creator_id %}
+                <a class="btn btn--ghost btn--sm" href="/leave_group/{{ group.id }}"
+                   onclick="return confirm('Leave this group?')">Leave</a>
+                {% endif %}
+              {% elif group.max_members and group.members|length >= group.max_members %}
+                <button class="btn btn--sm" disabled>Full</button>
+              {% else %}
+                <a class="btn btn--primary btn--sm" href="/join_group/{{ group.id }}">
+                  {% if group.is_public %}Join{% else %}Request to Join{% endif %}
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          No groups yet for this course.<br>
+          <a href="/create_group">Be the first to create one!</a>
+        </div>
+      {% endif %}
     </div>
+
+  </div>
 </div>
 {% endblock %}

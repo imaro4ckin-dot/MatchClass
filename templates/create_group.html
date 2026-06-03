@@ -1,35 +1,79 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="column column-50 column-offset-25">
-        <h2 style="text-align: center;">Create a Group</h2>
-        <p style="text-align: center;">Course: <strong>{{ user.course }}</strong></p>
+<div class="page-wrapper page-wrapper--narrow" style="padding-top: 2.5rem;">
 
-        <form method="POST">
-            <fieldset>
-                <label for="name">Group Name</label>
-                <input type="text" id="name" name="name" placeholder="e.g., Calc 101 Weekend Warriors" required>
+  <div class="page-header">
+    <div class="page-header__eyebrow">Groups</div>
+    <h2>Create a Group</h2>
+    <p class="text-dim mt-1">
+      Creating for course: <strong style="color: var(--acid);">{{ user.course }}</strong>
+    </p>
+  </div>
 
-                <label for="contact_info">Contact Info (Discord/Email)</label>
-                <input type="text" id="contact_info" name="contact_info" required>
+  <div class="card card--static">
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label" for="name">Group Name</label>
+        <input class="form-input" type="text" id="name" name="name"
+               placeholder="e.g. Calc 101 Weekend Warriors" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="contact_info">Contact Info</label>
+        <input class="form-input" type="text" id="contact_info" name="contact_info"
+               placeholder="Discord username, email, etc." required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="description">Description <span class="form-hint" style="display:inline;">(optional)</span></label>
+        <textarea class="form-textarea" id="description" name="description"
+                  placeholder="What will this group focus on? Any rules or expectations?"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="max_members">Member Limit <span class="form-hint" style="display:inline;">(optional)</span></label>
+        <input class="form-input" type="number" id="max_members" name="max_members"
+               min="2" placeholder="Leave blank for unlimited">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="tags_input">Tags <span class="form-hint" style="display:inline;">(optional, comma-separated)</span></label>
+        <input class="form-input" type="text" id="tags_input" name="tags_input"
+               placeholder="e.g. exam-prep, midterms, project">
+        <div class="form-hint">Help others find your group by topic.</div>
+        <div class="tag-list" id="tag-preview" style="margin-top:.5rem;"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-check">
+          <input type="checkbox" name="is_public" id="is_public" checked>
+          <span class="form-check-label">Public group — anyone can join instantly</span>
+        </label>
+        <div class="form-hint" style="margin-top:.4rem; padding-left: 26px;">
+          Uncheck to make it private (join by request only).
+        </div>
+      </div>
+      <div style="display:flex; gap:.75rem; margin-top:1.5rem;">
+        <button class="btn btn--primary" type="submit">Create Group</button>
+        <a class="btn btn--ghost" href="/dashboard">Cancel</a>
+      </div>
+    </form>
+  </div>
 
-                <label for="description">Description <small>(optional)</small></label>
-                <textarea id="description" name="description" placeholder="What will this group focus on? Any rules or expectations?" rows="3" style="resize:vertical;"></textarea>
+  <script>
+  (function(){
+    const input = document.getElementById('tags_input');
+    const preview = document.getElementById('tag-preview');
+    input.addEventListener('input', function(){
+      preview.innerHTML = '';
+      input.value.split(',').forEach(function(t){
+        const s = t.trim();
+        if(s){
+          const span = document.createElement('span');
+          span.className = 'tag';
+          span.textContent = s;
+          preview.appendChild(span);
+        }
+      });
+    });
+  })();
+  </script>
 
-                <label for="max_members">Member Limit <small>(optional — leave blank for unlimited)</small></label>
-                <input type="number" id="max_members" name="max_members" min="2" placeholder="e.g. 6">
-
-                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
-                    <input type="checkbox" name="is_public" id="is_public" checked style="width:auto;margin:0;">
-                    Public group (anyone can join instantly; uncheck for private/request-only)
-                </label>
-
-                <br>
-                <input class="button-primary" type="submit" value="Create Group">
-                <a class="button button-clear" href="/dashboard">Cancel</a>
-            </fieldset>
-        </form>
-    </div>
 </div>
 {% endblock %}

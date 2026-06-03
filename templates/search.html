@@ -1,38 +1,94 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<h2>Search Study Groups</h2>
+<div class="page-wrapper">
 
-<form method="GET" action="/search" style="display:flex;gap:.5rem;margin-bottom:2rem;">
-    <input type="text" name="course" value="{{ query }}" placeholder="Search by course (e.g. CS101, Calculus)" style="margin:0;flex:1;" required>
-    <input class="button-primary" type="submit" value="Search" style="margin:0;width:auto;">
-</form>
+  <div class="page-header">
+    <div class="page-header__eyebrow">Discover</div>
+    <h1>Search Groups</h1>
+  </div>
 
-{% if query %}
-    <h4>Results for "{{ query }}" &mdash; {{ results|length }} group(s)</h4>
+  <form method="GET" action="/search" class="search-bar" style="margin-bottom:.75rem;">
+    <input class="form-input" type="text" name="course" value="{{ query }}" placeholder="Search by course — e.g. CS101, Calculus, Physics II" autofocus>
+    <button class="btn btn--primary" type="submit">Search</button>
+  </form>
+
+  <!-- Filters row -->
+  <div class="filter-bar">
+    <span class="filter-bar__label">Availability</span>
+    {% set avail_opts = ['Mornings','Afternoons','Evenings','Weekends'] %}
+    <a class="filter-chip {% if not avail_filter %}filter-chip--active{% endif %}"
+       href="/search?course={{ query }}{% if tag_filter %}&tags={{ tag_filter }}{% endif %}">Any</a>
+    {% for opt in avail_opts %}
+    <a class="filter-chip {% if avail_filter == opt %}filter-chip--active{% endif %}"
+       href="/search?course={{ query }}&avail={{ opt }}{% if tag_filter %}&tags={{ tag_filter }}{% endif %}">{{ opt }}</a>
+    {% endfor %}
+    <span class="filter-bar__label" style="margin-left:.75rem;">Tag</span>
+    <input class="form-input" type="text" name="tags" form="tag-form"
+           value="{{ tag_filter or '' }}" placeholder="e.g. exam-prep"
+           style="width:140px; padding:.25rem .6rem; font-size:.82rem;">
+    <form id="tag-form" method="GET" action="/search" style="display:none;">
+      <input type="hidden" name="course" value="{{ query }}">
+      {% if avail_filter %}<input type="hidden" name="avail" value="{{ avail_filter }}">{% endif %}
+    </form>
+    <button class="btn btn--ghost btn--sm" onclick="document.getElementById('tag-form').submit()">Apply</button>
+  </div>
+
+  {% if query %}
+    <div class="divider-label">
+      {% if results %}{{ results|length }} result{% if results|length != 1 %}s{% endif %} for "{{ query }}"{% else %}No results for "{{ query }}"{% endif %}
+    </div>
+
     {% if results %}
-        <ul style="list-style:none;padding:0;">
-        {% for group in results %}
-            <li style="margin-bottom:1rem;padding:.8rem;border:1px solid #eee;border-radius:4px;">
-                <strong>{{ group.name }}</strong>
-                <span class="badge badge-{% if group.is_public %}public{% else %}private{% endif %}" style="margin-left:.5rem;">
-                    {% if group.is_public %}Public{% else %}Private{% endif %}
-                </span><br>
-                <small>Course: {{ group.course }} &nbsp;|&nbsp; Members: {{ group.members|length }}</small><br>
-                <div style="margin-top:.5rem;">
-                {% if user in group.members %}
-                    <a class="button button-outline button-small" href="/group/{{ group.id }}">View Group</a>
-                {% else %}
-                    <a class="button button-small" href="/join_group/{{ group.id }}">
-                        {% if group.is_public %}Join{% else %}Request to Join{% endif %}
-                    </a>
-                {% endif %}
-                </div>
-            </li>
-        {% endfor %}
-        </ul>
+      {% for group in results %}
+      <div class="group-card">
+        <div class="group-card__top">
+          <div>
+            <div class="group-card__name">{{ group.name }}</div>
+            <div class="group-card__desc">
+              Course: {{ group.course }} &nbsp;&middot;&nbsp; {{ group.members|length }} member{% if group.members|length != 1 %}s{% endif %}
+            </div>
+            {% if group.tags %}
+            <div class="tag-list" style="margin-top:.4rem;">
+              {% for tag in group.tags %}
+              <span class="tag">{{ tag.name }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:.4rem;">
+            <span class="badge badge--{% if group.is_public %}public{% else %}private{% endif %}">
+              {% if group.is_public %}Public{% else %}Private{% endif %}
+            </span>
+            {% if group.last_active %}
+            <span style="font-size:.72rem; color: var(--cream-dim);">
+              <span class="last-active-dot {% if (now - group.last_active).total_seconds() < 86400 %}last-active-dot--recent{% endif %}"></span>
+              {{ group.last_active.strftime('%b %d') }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="group-card__footer">
+          <span></span>
+          <div>
+            {% if user in group.members %}
+              <a class="btn btn--secondary btn--sm" href="/group/{{ group.id }}">View Group</a>
+            {% else %}
+              <a class="btn btn--primary btn--sm" href="/join_group/{{ group.id }}">
+                {% if group.is_public %}Join{% else %}Request to Join{% endif %}
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
     {% else %}
-        <p>No groups found for "{{ query }}".</p>
+      <div class="empty-state">
+        No groups found for "{{ query }}".<br>
+        <a href="/create_group">Create the first one!</a>
+      </div>
     {% endif %}
-{% endif %}
+  {% endif %}
+
+</div>
 {% endblock %}

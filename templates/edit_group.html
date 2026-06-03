@@ -1,38 +1,81 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="column column-60 column-offset-20">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-            <h2>Edit Group</h2>
-            <a class="button button-outline" href="/group/{{ group.id }}">Cancel</a>
-        </div>
+<div class="page-wrapper page-wrapper--narrow" style="padding-top: 2.5rem;">
 
-        <form method="POST">
-            <fieldset>
-                <label for="name">Group Name</label>
-                <input type="text" id="name" name="name" value="{{ group.name }}" required>
-
-                <label for="contact_info">Contact Info (Discord/Email)</label>
-                <input type="text" id="contact_info" name="contact_info" value="{{ group.contact_info }}" required>
-
-                <label for="description">Description <small>(optional)</small></label>
-                <textarea id="description" name="description" rows="3" style="resize:vertical;">{{ group.description or '' }}</textarea>
-
-                <label for="max_members">Member Limit <small>(optional — leave blank for unlimited)</small></label>
-                <input type="number" id="max_members" name="max_members" min="2"
-                       value="{{ group.max_members or '' }}" placeholder="e.g. 6">
-
-                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-top:.5rem;">
-                    <input type="checkbox" name="is_public" id="is_public"
-                           {% if group.is_public %}checked{% endif %} style="width:auto;margin:0;">
-                    Public group (anyone can join instantly; uncheck for private/request-only)
-                </label>
-
-                <br>
-                <input class="button-primary" type="submit" value="Save Changes">
-            </fieldset>
-        </form>
+  <div class="page-header">
+    <div class="page-header__row">
+      <div>
+        <div class="page-header__eyebrow">Groups</div>
+        <h2>Edit Group</h2>
+      </div>
+      <a class="btn btn--secondary" href="/group/{{ group.id }}">← Cancel</a>
     </div>
+  </div>
+
+  <div class="card card--static">
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label" for="name">Group Name</label>
+        <input class="form-input" type="text" id="name" name="name" value="{{ group.name }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="contact_info">Contact Info</label>
+        <input class="form-input" type="text" id="contact_info" name="contact_info" value="{{ group.contact_info }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="description">Description <span class="form-hint" style="display:inline;">(optional)</span></label>
+        <textarea class="form-textarea" id="description" name="description">{{ group.description or '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="max_members">Member Limit <span class="form-hint" style="display:inline;">(optional)</span></label>
+        <input class="form-input" type="number" id="max_members" name="max_members"
+               min="2" value="{{ group.max_members or '' }}" placeholder="Leave blank for unlimited">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="tags_input">Tags <span class="form-hint" style="display:inline;">(optional, comma-separated)</span></label>
+        <input class="form-input" type="text" id="tags_input" name="tags_input"
+               value="{{ group.tags | map(attribute='name') | join(', ') }}"
+               placeholder="e.g. exam-prep, midterms, project">
+        <div class="tag-list" id="tag-preview" style="margin-top:.5rem;">
+          {% for tag in group.tags %}
+          <span class="tag">{{ tag.name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-check">
+          <input type="checkbox" name="is_public" id="is_public" {% if group.is_public %}checked{% endif %}>
+          <span class="form-check-label">Public group — anyone can join instantly</span>
+        </label>
+        <div class="form-hint" style="margin-top:.4rem; padding-left: 26px;">
+          Uncheck to make it private (join by request only).
+        </div>
+      </div>
+      <div style="margin-top:1.5rem;">
+        <button class="btn btn--primary" type="submit">Save Changes</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+  (function(){
+    const input = document.getElementById('tags_input');
+    const preview = document.getElementById('tag-preview');
+    input.addEventListener('input', function(){
+      preview.innerHTML = '';
+      input.value.split(',').forEach(function(t){
+        const s = t.trim();
+        if(s){
+          const span = document.createElement('span');
+          span.className = 'tag';
+          span.textContent = s;
+          preview.appendChild(span);
+        }
+      });
+    });
+  })();
+  </script>
+
 </div>
 {% endblock %}
